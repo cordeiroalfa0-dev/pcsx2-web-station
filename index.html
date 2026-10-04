@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Play! Web Station — Emulador PS2 no navegador</title>
   <meta name="description" content="Emulador PlayStation 2 experimental no navegador. Escolha sua ISO e jogue sem instalar outro programa.">
+  <link rel="preload" href="/vendor/playjs/main.js" as="script">
+  <link rel="preload" href="/Play.wasm" as="fetch" type="application/wasm" crossorigin="anonymous">
   <link rel="manifest" href="/manifest.webmanifest">
   <style>
     :root { color-scheme: dark; --bg:#08090d; --panel:#11141b; --panel-2:#191d26; --line:#303744; --text:#f5f3ef; --muted:#9da3b0; --accent:#d7ff43; --accent-ink:#111607; }
