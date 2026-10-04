@@ -1,15 +1,16 @@
 {
   "version": 2,
   "builds": [
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "Play.js", "use": "@vercel/static" },
+    { "src": "Play.wasm", "use": "@vercel/static" },
+    { "src": "vendor/playjs/**", "use": "@vercel/static" }
+  ],
+  "headers": [
     {
-      "src": "index.html",
-      "use": "@vercel/static"
+      "source": "/Play.wasm",
+      "headers": [{ "key": "Content-Type", "value": "application/wasm" }]
     }
   ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ]
+  "routes": [{ "src": "/(.*)", "dest": "/$1" }]
 }
