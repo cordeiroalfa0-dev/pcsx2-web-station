@@ -37,3 +37,8 @@ O servidor iniciará em .
 
 ---
 Criado para uso conjunto com o ecossistema Lovable & PCSX2.
+
+
+## Busca e links salvos
+
+A barra de busca pesquisa nomes e caminhos da biblioteca local e também os marcadores cadastrados em **Links salvos**. É possível guardar URLs `http(s)`, links `magnet:` e arquivos `.torrent` para conteúdo que você possui ou está autorizado a acessar. O launcher não faz busca na web, não indexa sites de terceiros e não baixa torrents automaticamente; o botão **Abrir** apenas abre o link no navegador/aplicativo padrão.

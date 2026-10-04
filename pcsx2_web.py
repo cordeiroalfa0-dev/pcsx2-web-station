@@ -88,6 +88,7 @@ def load():
     d.setdefault("exe", "")
     d.setdefault("fullscreen", True)
     d.setdefault("games", [])
+    d.setdefault("links", [])
 
     # Autodeteccao se nao houver exe configurado ou se nao existir
     if not d["exe"] or (not d["exe"].startswith("flatpak:") and not Path(d["exe"]).exists()):
@@ -279,6 +280,20 @@ PAGE = """<!doctype html>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    .links-section { margin-top: 36px; }
+    .link-list { display: flex; flex-direction: column; gap: 10px; }
+    .link-card {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--surface-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px;
+    }
+    .link-card:hover { border-color: var(--border-active); }
+    .link-icon { font-size: 22px; width: 32px; text-align: center; }
+    .link-info { min-width: 0; flex: 1; }
+    .link-name { font-weight: 700; font-size: 14px; }
+    .link-url { color: var(--fg-muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px; }
+    .link-actions { display: flex; gap: 6px; }
+    .link-empty { color: var(--fg-muted); font-size: 13px; padding: 14px 0; }
     :root {
       --bg: #0c0f17;
       --surface: #141824;
@@ -879,7 +894,7 @@ PAGE = """<!doctype html>
       <div class="header-actions">
         <div class="search-box">
           <span class="search-icon">🔍</span>
-          <input type="text" id="searchInput" placeholder="Buscar na biblioteca..." oninput="filterGames()">
+          <input type="text" id="searchInput" placeholder="Buscar jogos e links salvos..." oninput="filterGames()">
         </div>
         <button class="btn btn-primary" onclick="openAddModal()">
           <span>➕ Adicionar</span>
@@ -923,6 +938,14 @@ PAGE = """<!doctype html>
       <p>Adicione arquivos .iso, .chd, escaneie uma pasta inteira ou baixe direto do Google Drive.</p>
       <button class="btn btn-primary" onclick="openAddModal()">Adicionar Jogos Agora</button>
     </div>
+    <section class="links-section">
+      <div class="section-header">
+        <div class="section-title"><span>Links salvos</span><span class="count-badge" id="linkCount">0</span></div>
+        <button class="btn btn-sm" onclick="openAddModal('link')">🔗 Salvar link</button>
+      </div>
+      <div id="linkList" class="link-list"></div>
+      <div id="linkEmpty" class="link-empty">Nenhum link salvo. Adicione links autorizados do seu acervo ou de fontes legais.</div>
+    </section>
   </main>
 
   <!-- Modal Adicionar -->
@@ -936,6 +959,7 @@ PAGE = """<!doctype html>
         <button class="tab-btn active" id="tabScanBtn" onclick="switchAddTab('scan')">📁 Varrer Pasta</button>
         <button class="tab-btn" id="tabFileBtn" onclick="switchAddTab('file')">📄 Arquivo Unico</button>
         <button class="tab-btn" id="tabDriveBtn" onclick="switchAddTab('drive')">☁️ Google Drive</button>
+        <button class="tab-btn" id="tabLinkBtn" onclick="switchAddTab('link')">🔗 Salvar Link</button>
       </div>
       <div class="modal-body">
         <!-- Tab 1: Varrer Pasta -->
@@ -965,6 +989,20 @@ PAGE = """<!doctype html>
           </div>
           <p style="font-size: 12px; color: var(--fg-muted); margin-top: 6px;">
             O arquivo sera baixado em segundo plano para a pasta local <code>isos/</code> via <code>gdown</code>.
+          </p>
+        </div>
+        <!-- Tab 4: Marcador de link -->
+        <div id="tabLink" class="tab-content" style="display: none;">
+          <div class="form-group">
+            <label>Nome do link</label>
+            <input type="text" id="linkNameInput" placeholder="Ex: Meu backup legal de Gran Turismo 4">
+          </div>
+          <div class="form-group">
+            <label>URL (Google Drive, magnet ou arquivo .torrent)</label>
+            <input type="url" id="savedLinkUrlInput" placeholder="https://drive.google.com/... ou magnet:?xt=...">
+          </div>
+          <p style="font-size: 12px; color: var(--fg-muted); margin-top: 6px;">
+            O link será apenas salvo como marcador local. Use somente conteúdo que você possui ou tem autorização para acessar.
           </p>
         </div>
       </div>
@@ -1026,7 +1064,7 @@ PAGE = """<!doctype html>
 
   <script>
     const TOKEN = "__TOKEN__";
-    let state = { exe: "", fullscreen: true, games: [], jobs: {} };
+    let state = { exe: "", fullscreen: true, games: [], links: [], jobs: {} };
     let currentTab = 'scan';
 
     const $ = id => document.getElementById(id);
@@ -1053,6 +1091,7 @@ PAGE = """<!doctype html>
       state = s;
       updateHeaderStatus();
       renderGames();
+      renderLinks();
       updateJobs();
     }
 
@@ -1091,7 +1130,7 @@ PAGE = """<!doctype html>
 
       const filtered = state.games
         .map((g, idx) => ({ ...g, originalIndex: idx }))
-        .filter(g => g.name.toLowerCase().includes(q));
+        .filter(g => `${g.name} ${g.path}`.toLowerCase().includes(q));
 
       $("visibleCount").textContent = filtered.length;
 
@@ -1190,8 +1229,35 @@ PAGE = """<!doctype html>
       });
     }
 
+    function renderLinks() {
+      const list = $("linkList");
+      const empty = $("linkEmpty");
+      const q = $("searchInput").value.toLowerCase().trim();
+      const links = (state.links || []).map((link, index) => ({ ...link, index }))
+        .filter(link => `${link.name} ${link.url} ${link.source || ''}`.toLowerCase().includes(q));
+      $("linkCount").textContent = links.length;
+      list.innerHTML = "";
+      empty.style.display = links.length ? "none" : "block";
+      links.forEach(link => {
+        const card = document.createElement("div");
+        card.className = "link-card";
+        const source = (link.source || "link").toLowerCase();
+        const icon = source === "google drive" ? "☁️" : source === "torrent" ? "🧲" : "🔗";
+        card.innerHTML = `<div class="link-icon">${icon}</div><div class="link-info"><div class="link-name">${escapeHtml(link.name)}</div><div class="link-url" title="${escapeHtml(link.url)}">${escapeHtml(link.url)}</div></div>`;
+        const actions = document.createElement("div");
+        actions.className = "link-actions";
+        const open = document.createElement("button");
+        open.className = "btn btn-sm"; open.textContent = "Abrir";
+        open.onclick = () => window.open(link.url, "_blank", "noopener,noreferrer");
+        const del = document.createElement("button");
+        del.className = "icon-btn delete"; del.title = "Remover link"; del.textContent = "🗑️";
+        del.onclick = async () => { if (confirm(`Remover o link "${link.name}"?`)) { await api("/api/remove_link", { index: link.index }); loadState(); } };
+        actions.append(open, del); card.append(actions); list.append(card);
+      });
+    }
     function filterGames() {
       renderGames();
+      renderLinks();
     }
 
     function escapeHtml(str) {
@@ -1213,7 +1279,8 @@ PAGE = """<!doctype html>
       loadState();
     }
 
-    function openAddModal() {
+    function openAddModal(tab = 'scan') {
+      switchAddTab(tab);
       $("addModal").classList.add("open");
     }
 
@@ -1267,6 +1334,14 @@ PAGE = """<!doctype html>
         if (res.error) return alert("Erro: " + res.error);
         showToast("Download iniciado em segundo plano!");
         $("driveUrlInput").value = "";
+      } else if (currentTab === 'link') {
+        const name = $("linkNameInput").value.trim();
+        const url = $("savedLinkUrlInput").value.trim();
+        if (!name || !url) return alert("Informe o nome e a URL do link.");
+        const res = await api("/api/add_link", { name, url });
+        if (res.error) return alert("Erro: " + res.error);
+        showToast("Link salvo na sua lista!");
+        $("linkNameInput").value = ""; $("savedLinkUrlInput").value = "";
       }
       closeModal('addModal');
       loadState();
@@ -1404,6 +1479,18 @@ class Handler(BaseHTTPRequestHandler):
                     cover_for(name, force_refresh=True)
                 elif p == "/api/remove":
                     del d["games"][int(body["index"])]
+                elif p == "/api/add_link":
+                    name = str(body.get("name", "")).strip()
+                    url = str(body.get("url", "")).strip()
+                    parsed = urllib.parse.urlparse(url)
+                    if not name or not url or not parsed.scheme:
+                        raise ValueError("Informe um nome e uma URL valida.")
+                    if parsed.scheme not in {"http", "https", "magnet"} and not url.lower().endswith(".torrent"):
+                        raise ValueError("Use uma URL http(s), magnet ou arquivo .torrent.")
+                    source = "Google Drive" if "drive.google.com" in url.lower() else "Torrent" if parsed.scheme == "magnet" or url.lower().endswith(".torrent") else "Link"
+                    d["links"].append({"name": name, "url": url, "source": source, "added_at": int(time.time())})
+                elif p == "/api/remove_link":
+                    del d["links"][int(body["index"])]
                 elif p == "/api/settings":
                     if "exe" in body:
                         d["exe"] = str(body["exe"]).strip().strip('"')
