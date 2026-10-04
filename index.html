@@ -17,6 +17,9 @@
     .brand { display:flex; align-items:center; gap:11px; color:var(--text); text-decoration:none; }
     .mark { display:grid; place-items:center; width:34px; height:34px; border-radius:10px; background:var(--accent); color:var(--accent-ink); font-weight:800; box-shadow:0 0 22px rgba(215,255,67,.22); }
     h1 { margin:0; font-size:15px; letter-spacing:-.02em; }
+    .site-nav { display:flex; align-items:center; gap:6px; margin-left:auto; }
+    .site-nav a { padding:7px 11px; border:1px solid transparent; border-radius:7px; color:var(--muted); text-decoration:none; font-size:12px; font-weight:600; transition:.18s ease; }
+    .site-nav a:hover, .site-nav a:focus-visible { border-color:var(--line); background:var(--panel-2); color:var(--accent); outline:none; }
     .header-note { color:var(--muted); font-size:12px; }
     main { width:min(1120px,calc(100% - 32px)); margin:auto; }
     .hero { display:grid; grid-template-columns:1.3fr .7fr; gap:40px; align-items:end; padding:clamp(52px,9vw,108px) 0 38px; }
@@ -51,12 +54,17 @@
     footer { padding:20px 0 50px; color:#7d8491; text-align:center; font-size:12px; }
     footer a { color:var(--accent); }
     @media (max-width:800px) { .hero{grid-template-columns:1fr}.hero-card{max-width:450px}.help-grid{grid-template-columns:1fr 1fr} }
-    @media (max-width:520px) { header{padding:12px 16px}.header-note{display:none}main{width:calc(100% - 24px)}.hero{padding-top:52px}.hero h2{font-size:clamp(43px,14vw,68px)}.emulator-bar{align-items:flex-start;flex-direction:column;gap:5px}.canvas-wrap{min-height:470px}.help-grid{grid-template-columns:1fr}.help-card{padding:16px} }
+    @media (max-width:520px) { header{padding:12px 16px; gap:8px}.header-note{display:none}.site-nav{gap:2px}.site-nav a{padding:7px 8px}main{width:calc(100% - 24px)}.hero{padding-top:52px}.hero h2{font-size:clamp(43px,14vw,68px)}.emulator-bar{align-items:flex-start;flex-direction:column;gap:5px}.canvas-wrap{min-height:470px}.help-grid{grid-template-columns:1fr}.help-card{padding:16px} }
   </style>
 </head>
-<body>
+<body id="top">
   <header>
     <a class="brand" href="/" aria-label="Play! Web Station — início"><span class="mark">P!</span><h1>Play! Web Station</h1></a>
+    <nav class="site-nav" aria-label="Atalhos da página">
+      <a href="#emulator">Jogar</a>
+      <a href="#help">Ajuda</a>
+      <a href="#top">Topo</a>
+    </nav>
     <span class="header-note">Emulador PS2 no navegador</span>
   </header>
   <main>
@@ -81,7 +89,7 @@
       <div class="dropzone" id="dropzone">Escolha sua ISO no botão acima ou arraste o arquivo para cá</div>
       <div id="root" aria-live="polite">Carregando o emulador…</div>
     </section>
-    <section class="help-grid" aria-label="Informações rápidas">
+    <section class="help-grid" id="help" aria-label="Informações rápidas">
       <div class="help-card"><strong>Formatos aceitos</strong>ISO, CHD, CSO, ISZ, BIN e ELF.</div>
       <div class="help-card"><strong>Como jogar</strong>Escolha o arquivo, aguarde o carregamento e clique no quadro para capturar o controle.</div>
       <div class="help-card"><strong>Compatibilidade</strong>Este emulador web é experimental. Alguns jogos podem não funcionar corretamente.</div>
