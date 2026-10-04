@@ -12,6 +12,8 @@ Launcher web local e Bridge para conectar um site ao emulador **PCSX2** instalad
 - Busca local de jogos e links salvos pelo usuário.
 - Página `index.html` com o emulador open source Play!.js dentro do navegador via WebAssembly.
 - Créditos e licença do núcleo Play! visíveis na interface.
+- PWA instalável com cache local dos assets WebAssembly.
+- Busca direta no tracker oficial de compatibilidade do Play! no GitHub.
 - Não inclui BIOS, ISOs ou conteúdo protegido por direitos autorais.
 
 ## Emulador dentro da página web
@@ -96,3 +98,9 @@ Este projeto é distribuído sob a licença MIT. Ele não distribui o PCSX2, BIO
 - O arquivo continua local no navegador; não há upload automático.
 
 A listagem automática dos arquivos do Google Drive ainda depende da Google Drive API. Sem uma API key, o botão abre a pasta pública para o usuário selecionar o arquivo manualmente.
+
+## Melhorias validadas no ecossistema oficial
+
+O botão **Pesquisar no tracker** consulta o repositório oficial [Play-Compatibility](https://github.com/jpd002/Play-Compatibility), usado pelo projeto Play! para registrar a compatibilidade dos jogos. A aplicação não inventa classificações locais: ela abre os resultados oficiais do GitHub para o nome pesquisado.
+
+O site também pode ser instalado como aplicativo pelo navegador. O service worker armazena em cache o HTML e os assets `Play.js`/`Play.wasm` para acelerar novas aberturas e permitir o carregamento da interface quando a conexão estiver instável. O jogo escolhido continua sendo fornecido pelo usuário.

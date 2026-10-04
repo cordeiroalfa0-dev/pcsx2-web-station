@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PCSX2 Web Station — Emulador PS2 no navegador</title>
   <meta name="description" content="Emulador PlayStation 2 experimental no navegador usando Play!.js e WebAssembly.">
+  <link rel="manifest" href="/manifest.webmanifest">
   <style>
     :root { color-scheme: dark; --bg: #070b13; --panel: #111a2a; --line: #253553; --text: #edf4ff; --muted: #9fb0ca; --accent: #36a3ff; }
     * { box-sizing: border-box; }
@@ -60,6 +61,7 @@
       </div>
       <div class="actions">
         <button class="primary" id="fullscreen">Tela cheia</button>
+        <button id="install" hidden>Instalar app</button>
         <a class="button" href="https://github.com/jpd002/Play-" target="_blank" rel="noopener">Código-fonte</a>
       </div>
     </section>
@@ -86,6 +88,16 @@
         <div class="status ok">✓ Nenhum upload automático</div>
       </div>
     </section>
+    <section class="source-card" style="margin-top: 14px;" aria-label="Compatibilidade dos jogos">
+      <h3>Compatibilidade oficial</h3>
+      <p>Consulte o rastreador oficial do Play! antes de tentar um jogo. A busca abre somente resultados do GitHub do projeto.</p>
+      <div class="source-actions">
+        <input id="compatibilityGame" type="search" placeholder="Nome do jogo, por exemplo God of War" style="flex:1;min-width:220px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--text);padding:10px 12px;">
+        <button class="primary" id="compatibilitySearch">Pesquisar no tracker</button>
+        <a class="button" href="https://github.com/jpd002/Play-Compatibility" target="_blank" rel="noopener">Abrir tracker</a>
+      </div>
+      <div class="status" id="compatibilityStatus" aria-live="polite"></div>
+    </section>
     <section class="notes">
       <div class="note"><strong>Como iniciar</strong>Abra o seletor de arquivos dentro do quadro e escolha uma ISO, CSO, CHD, ISZ, BIN ou ELF autorizada.</div>
       <div class="note"><strong>BIOS</strong>O Play!.js usa uma BIOS HLE integrada e não aceita BIOS externa. Isso é diferente do PCSX2 desktop.</div>
@@ -104,6 +116,19 @@
       try { await navigator.clipboard.writeText(DRIVE_FOLDER); status.textContent = 'Link copiado.'; status.className = 'status ok'; }
       catch { status.textContent = DRIVE_FOLDER; status.className = 'status'; }
     });
+    document.getElementById('compatibilitySearch').addEventListener('click', () => {
+      const game = document.getElementById('compatibilityGame').value.trim();
+      const status = document.getElementById('compatibilityStatus');
+      if (!game) { status.textContent = 'Digite o nome de um jogo.'; status.className = 'status error'; return; }
+      const query = encodeURIComponent(`${game} in:title`);
+      window.open(`https://github.com/jpd002/Play-Compatibility/issues?q=is%3Aissue+${query}`, '_blank', 'noopener');
+      status.textContent = 'Resultados oficiais abertos em uma nova aba.'; status.className = 'status ok';
+    });
+    document.getElementById('compatibilityGame').addEventListener('keydown', event => { if (event.key === 'Enter') document.getElementById('compatibilitySearch').click(); });
+    let installPrompt;
+    window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); installPrompt = event; document.getElementById('install').hidden = false; });
+    document.getElementById('install').addEventListener('click', async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; document.getElementById('install').hidden = true; });
+    if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
     const dropzone = document.getElementById('dropzone');
     function loadDroppedFile(file) {
       if (!file || !SUPPORTED.test(file.name)) { dropzone.textContent = 'Formato não suportado. Use ISO, CHD, CSO, ISZ, BIN ou ELF.'; dropzone.classList.remove('active'); return; }

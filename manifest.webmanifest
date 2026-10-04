@@ -1,0 +1,14 @@
+{
+  "name": "PCSX2 Web Station",
+  "short_name": "PCSX2 Web",
+  "description": "Emulador PS2 experimental open source no navegador.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070b13",
+  "theme_color": "#36a3ff",
+  "categories": ["games", "emulator"],
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
