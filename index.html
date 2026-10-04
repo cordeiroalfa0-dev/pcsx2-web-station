@@ -41,6 +41,31 @@
     .status { min-height: 20px; color: var(--muted); font-size: 13px; }
     .status.ok { color: #7ee2a8; }
     .status.error { color: #ff9c9c; }
+    .bridge-card { margin-top: 16px; padding: 18px; border: 1px solid #2d6b9e; border-radius: 12px; background: linear-gradient(135deg, rgba(17,45,72,.92), rgba(17,26,42,.92)); }
+    .performance-card { margin-top: 16px; padding: 18px; border: 1px solid #3c5d8c; border-radius: 12px; background: rgba(17,26,42,.88); }
+    .performance-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 9px; align-items: end; }
+    .performance-grid label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; }
+    .performance-grid select { width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); padding: 10px 11px; font: inherit; }
+    .gpu-badge { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: rgba(7,11,19,.5); color: var(--muted); font-size: 12px; }
+    .gpu-badge.ok { color: #7ee2a8; border-color: #2c7d59; }
+    .gpu-badge.warn { color: #ffd38a; border-color: #8d672c; }
+    .performance-help { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+    .performance-checks { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 12px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 13px; }
+    .performance-checks .ok { color: #7ee2a8; }
+    .performance-checks .warn { color: #ffd38a; }
+    body.performance-mode .canvas-wrap { background: #000; }
+    body.performance-mode #outputCanvas { image-rendering: pixelated; border-color: #496b8f; }
+    body.performance-mode .emulator, body.performance-mode .source-card, body.performance-mode .performance-card { box-shadow: none; }
+    @media (max-width: 900px) { .performance-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 520px) { .performance-grid { grid-template-columns: 1fr; } }
+    .bridge-grid { display: grid; grid-template-columns: 1.1fr 1.6fr auto; gap: 9px; align-items: end; }
+    .bridge-grid label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; }
+    .bridge-grid input { width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); padding: 10px 11px; font: inherit; }
+    .bridge-help { margin: 6px 0 14px; color: var(--muted); font-size: 13px; }
+    .bridge-library { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .bridge-game { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: rgba(7,11,19,.5); }
+    .bridge-game span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    @media (max-width: 760px) { .bridge-grid { grid-template-columns: 1fr; } }
     .notes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
     .note { padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: rgba(17,26,42,.8); color: var(--muted); }
     .note strong { display: block; color: var(--text); margin-bottom: 4px; }
@@ -66,10 +91,24 @@
       </div>
     </section>
     <section class="emulator" id="emulator" aria-label="Emulador PlayStation 2">
-      <div class="emulator-bar"><span><span class="dot"></span><strong>Play!.js</strong> · núcleo open source · WebAssembly local</span><span>O jogo não é enviado ao servidor</span></div>
+      <div class="emulator-bar"><span><span class="dot"></span><strong>Play!.js</strong> · núcleo open source · WebAssembly local</span><span id="gpuBadge">Verificando GPU…</span></div>
       <div class="canvas-wrap"><canvas id="outputCanvas" width="640" height="480" tabindex="-1"></canvas></div>
       <div class="dropzone" id="dropzone">Arraste uma ISO, CHD, CSO, ISZ, BIN ou ELF para cá</div>
       <div id="root" aria-live="polite">Carregando o núcleo do emulador…</div>
+    </section>
+    <section class="performance-card" aria-label="Assistente de desempenho gráfico">
+      <h3 style="margin:0 0 6px;">Assistente de desempenho</h3>
+      <p class="performance-help">A web pode escolher renderização acelerada, reduzir efeitos da interface, manter o PC acordado e usar tela cheia. Ela não cria uma placa de vídeo: se o navegador estiver usando renderização por software, use o PCSX2 desktop pelo Bridge.</p>
+      <div class="performance-grid" style="margin-top:12px;">
+        <div class="gpu-badge" id="gpuStatus">Analisando WebGL/WebGPU…</div>
+        <label>Perfil
+          <select id="performanceMode"><option value="balanced">Equilibrado</option><option value="performance">Desempenho (menos efeitos)</option><option value="quality">Qualidade (imagem suave)</option></select>
+        </label>
+        <button id="performanceFullscreen">Tela cheia para jogar</button>
+        <button id="keepAwake">Manter tela acordada</button>
+      </div>
+      <ul class="performance-checks" id="performanceChecks" aria-live="polite"></ul>
+      <div class="status" id="gamepadStatus" aria-live="polite">Gamepad: procurando controle…</div>
     </section>
     <section class="source-panel" aria-label="Fontes de jogos">
       <div class="source-card">
@@ -87,6 +126,26 @@
         <div class="source-actions"><a class="button" href="https://github.com/jpd002/Play-" target="_blank" rel="noopener">Ver código open source</a><a class="button" href="/third_party/play/LICENSE.txt" target="_blank" rel="noopener">Ver licença</a><a class="button" href="/third_party/play/SOURCE-VERIFICATION.md" target="_blank" rel="noopener">Verificação</a></div>
         <div class="status ok">✓ Nenhum upload automático</div>
       </div>
+    </section>
+    <section class="bridge-card" aria-label="Conexão com o PCSX2 local">
+      <h3 style="margin:0 0 6px;">Abrir ISO no PCSX2 deste PC</h3>
+      <p class="bridge-help">Inicie o Bridge no mesmo computador onde o PCSX2 está instalado. O navegador não revela o caminho real de um arquivo escolhido; informe abaixo o caminho completo da ISO no PC.</p>
+      <div class="bridge-grid">
+        <label>URL do Bridge
+          <input id="bridgeUrl" value="http://127.0.0.1:8765" spellcheck="false" autocomplete="off">
+        </label>
+        <label>Caminho completo da ISO no PC
+          <input id="isoPath" placeholder="Windows: C:\\Jogos\\meu-jogo.iso · Linux: /home/voce/Jogos/meu-jogo.iso" spellcheck="false" autocomplete="off">
+        </label>
+        <button id="bridgeTest">Testar conexão</button>
+      </div>
+      <div class="source-actions" style="margin-top:10px;">
+        <button class="primary" id="openIso">Abrir ISO no PCSX2</button>
+        <button id="scanGames">Escanear pasta</button>
+        <label class="button" style="cursor:pointer;">Selecionar pasta para escanear <input id="scanPath" type="text" placeholder="Caminho da pasta no PC" style="width:220px;border:0;background:transparent;color:var(--text);outline:0;"></label>
+      </div>
+      <div class="status" id="bridgeStatus" aria-live="polite"></div>
+      <div class="bridge-library" id="bridgeLibrary" aria-live="polite"></div>
     </section>
     <section class="source-card" style="margin-top: 14px;" aria-label="Compatibilidade dos jogos">
       <h3>Compatibilidade oficial</h3>
@@ -108,9 +167,56 @@
   <script>
     const DRIVE_FOLDER = 'https://drive.google.com/drive/folders/1e2rVm42_iBETPZb9gRKEWMMejlFe9Fns?usp=drive_link';
     const SUPPORTED = /\.(iso|chd|cso|isz|bin|elf)$/i;
-    document.getElementById('fullscreen').addEventListener('click', () => {
-      document.getElementById('emulator').requestFullscreen?.();
-    });
+    const emulator = document.getElementById('emulator');
+    const gpuBadge = document.getElementById('gpuBadge');
+    const gpuStatus = document.getElementById('gpuStatus');
+    const performanceChecks = document.getElementById('performanceChecks');
+    const performanceMode = document.getElementById('performanceMode');
+    const gamepadStatus = document.getElementById('gamepadStatus');
+    let wakeLock = null;
+    async function enterGameFullscreen() {
+      if (!document.fullscreenElement) { try { await emulator.requestFullscreen?.(); } catch {} }
+    }
+    document.getElementById('fullscreen').addEventListener('click', enterGameFullscreen);
+    document.getElementById('performanceFullscreen').addEventListener('click', enterGameFullscreen);
+    // Browsers require a user gesture; the first interaction enters fullscreen automatically when permitted.
+    let fullscreenAttempted = false;
+    document.addEventListener('pointerdown', () => { if (!fullscreenAttempted) { fullscreenAttempted = true; enterGameFullscreen(); } }, { once: true, passive: true });
+    document.addEventListener('keydown', event => { if (event.key === 'F11') { event.preventDefault(); enterGameFullscreen(); } }, { passive: false });
+    function detectGraphics() {
+      const probe = document.createElement('canvas');
+      const gl = probe.getContext('webgl2', { powerPreference: 'high-performance' }) || probe.getContext('webgl', { powerPreference: 'high-performance' });
+      const webgpu = 'gpu' in navigator;
+      let renderer = '';
+      if (gl) { const info = gl.getExtension('WEBGL_debug_renderer_info'); renderer = info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); }
+      const software = /swiftshader|llvmpipe|softpipe|software rasterizer/i.test(renderer);
+      if (gl && !software) { gpuBadge.textContent = `GPU/WebGL ativo${renderer ? ` · ${renderer}` : ''}`; gpuBadge.className = 'gpu-badge ok'; gpuStatus.textContent = `Aceleração gráfica disponível${webgpu ? ' · WebGPU detectado' : ''}`; gpuStatus.className = 'gpu-badge ok'; }
+      else if (gl) { gpuBadge.textContent = 'WebGL por software'; gpuBadge.className = 'gpu-badge warn'; gpuStatus.textContent = 'Renderização por software: prefira PCSX2 desktop'; gpuStatus.className = 'gpu-badge warn'; }
+      else { gpuBadge.textContent = 'WebGL indisponível'; gpuBadge.className = 'gpu-badge warn'; gpuStatus.textContent = 'WebGL indisponível: atualize o navegador ou ative a aceleração'; gpuStatus.className = 'gpu-badge warn'; }
+      performanceChecks.innerHTML = `<li class="${gl ? 'ok' : 'warn'}">${gl ? '✓' : '⚠'} WebGL ${gl ? 'disponível' : 'não disponível'}</li><li class="${webgpu ? 'ok' : 'warn'}">${webgpu ? '✓ WebGPU detectado' : '• WebGPU opcional não detectado'}</li><li>• Jogo local: sem upload</li>`;
+    }
+    function applyPerformanceMode(value) {
+      document.body.classList.toggle('performance-mode', value === 'performance');
+      document.getElementById('outputCanvas').style.imageRendering = value === 'quality' ? 'auto' : 'pixelated';
+      localStorage.setItem('pcsx2-performance-mode', value);
+    }
+    performanceMode.value = localStorage.getItem('pcsx2-performance-mode') || 'balanced';
+    performanceMode.addEventListener('change', () => applyPerformanceMode(performanceMode.value));
+    applyPerformanceMode(performanceMode.value);
+    async function toggleWakeLock() {
+      const button = document.getElementById('keepAwake');
+      if (!('wakeLock' in navigator)) { button.textContent = 'Wake Lock indisponível'; gamepadStatus.textContent = 'Dica: desative a suspensão automática do sistema durante a partida.'; return; }
+      try { if (wakeLock) { await wakeLock.release(); wakeLock = null; button.textContent = 'Manter tela acordada'; gamepadStatus.textContent = 'Tela acordada desativada.'; } else { wakeLock = await navigator.wakeLock.request('screen'); button.textContent = 'Tela acordada ✓'; gamepadStatus.textContent = 'Tela impedida de suspender durante o jogo.'; } } catch { gamepadStatus.textContent = 'O navegador bloqueou o Wake Lock; mantenha o PC ligado manualmente.'; }
+    }
+    document.getElementById('keepAwake').addEventListener('click', toggleWakeLock);
+    function updateGamepadStatus() {
+      const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : [];
+      gamepadStatus.textContent = pads.length ? `Gamepad conectado: ${pads[0].id}. Clique no quadro do jogo para capturar os controles.` : 'Gamepad: conecte um controle e pressione qualquer botão para detectar.';
+      gamepadStatus.className = pads.length ? 'status ok' : 'status';
+    }
+    window.addEventListener('gamepadconnected', updateGamepadStatus);
+    window.addEventListener('gamepaddisconnected', updateGamepadStatus);
+    detectGraphics(); updateGamepadStatus();
     document.getElementById('copyDrive').addEventListener('click', async () => {
       const status = document.getElementById('driveStatus');
       try { await navigator.clipboard.writeText(DRIVE_FOLDER); status.textContent = 'Link copiado.'; status.className = 'status ok'; }
@@ -129,7 +235,42 @@
     window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); installPrompt = event; document.getElementById('install').hidden = false; });
     document.getElementById('install').addEventListener('click', async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; document.getElementById('install').hidden = true; });
     if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+    const bridgeUrl = document.getElementById('bridgeUrl');
+    const isoPath = document.getElementById('isoPath');
+    const bridgeStatus = document.getElementById('bridgeStatus');
+    const bridgeLibrary = document.getElementById('bridgeLibrary');
+    const bridgeToken = 'pcsx2-token';
+    function setBridgeStatus(message, ok = false) { bridgeStatus.textContent = message; bridgeStatus.className = 'status ' + (ok ? 'ok' : 'error'); }
+    async function bridgeRequest(endpoint, options = {}) {
+      const response = await fetch(bridgeUrl.value.replace(/\/$/, '') + endpoint, { ...options, headers: { 'Content-Type': 'application/json', 'X-Token': bridgeToken, ...(options.headers || {}) } });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.error) throw new Error(data.error || `Bridge respondeu HTTP ${response.status}`);
+      return data;
+    }
+    function renderBridgeLibrary(games = []) {
+      bridgeLibrary.innerHTML = games.length ? games.map((game, index) => `<div class="bridge-game"><span title="${game.path}">${game.name} <small>(${game.path})</small></span><button data-play-index="${index}">Abrir</button></div>`).join('') : '';
+      bridgeLibrary.querySelectorAll('[data-play-index]').forEach(button => button.addEventListener('click', async () => {
+        try { setBridgeStatus('Iniciando PCSX2…'); const result = await bridgeRequest('/api/play', { method: 'POST', body: JSON.stringify({ index: Number(button.dataset.playIndex) }) }); setBridgeStatus(`PCSX2 iniciado com ${result.path}`, true); }
+        catch (error) { setBridgeStatus(error.message); }
+      }));
+    }
+    document.getElementById('bridgeTest').addEventListener('click', async () => {
+      try { const state = await bridgeRequest('/api/state'); renderBridgeLibrary(state.games); setBridgeStatus(`Conectado. PCSX2 configurado: ${state.exe || 'não detectado'}`, true); }
+      catch (error) { setBridgeStatus('Não conectou ao Bridge. Execute bridge/run-bridge.bat (Windows) ou bridge/run-bridge.sh (Linux/macOS).'); }
+    });
+    document.getElementById('openIso').addEventListener('click', async () => {
+      if (!isoPath.value.trim()) { setBridgeStatus('Informe o caminho completo da ISO no seu PC.'); isoPath.focus(); return; }
+      try { const result = await bridgeRequest('/api/open', { method: 'POST', body: JSON.stringify({ path: isoPath.value.trim() }) }); setBridgeStatus(`ISO aberta no PCSX2: ${result.path}`, true); const state = await bridgeRequest('/api/state'); renderBridgeLibrary(state.games); }
+      catch (error) { setBridgeStatus(error.message); }
+    });
+    document.getElementById('scanGames').addEventListener('click', async () => {
+      if (!document.getElementById('scanPath').value.trim()) { setBridgeStatus('Informe o caminho da pasta que contém suas ISOs.'); return; }
+      try { const result = await bridgeRequest('/api/scan', { method: 'POST', body: JSON.stringify({ path: document.getElementById('scanPath').value.trim() }) }); const state = await bridgeRequest('/api/state'); renderBridgeLibrary(state.games); setBridgeStatus(`${result.added} jogo(s) adicionado(s); ${result.found} arquivo(s) encontrado(s).`, true); }
+      catch (error) { setBridgeStatus(error.message); }
+    });
+
     const dropzone = document.getElementById('dropzone');
+    document.getElementById('outputCanvas').addEventListener('click', () => document.getElementById('outputCanvas').focus());
     function loadDroppedFile(file) {
       if (!file || !SUPPORTED.test(file.name)) { dropzone.textContent = 'Formato não suportado. Use ISO, CHD, CSO, ISZ, BIN ou ELF.'; dropzone.classList.remove('active'); return; }
       const input = document.querySelector('#root input[type=file]');

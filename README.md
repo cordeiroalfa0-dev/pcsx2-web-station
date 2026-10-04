@@ -8,13 +8,60 @@ Launcher web local e Bridge para conectar um site ao emulador **PCSX2** instalad
 - Compatível com Windows, Linux e macOS, desde que Node.js 18+ esteja instalado.
 - Detecção automática do PCSX2 em caminhos comuns.
 - API local compatível com o site: estado, configuração, biblioteca, varredura e inicialização de jogos.
-- CORS habilitado para o site Lovable acessar o Bridge local.
+- Abertura direta de uma ISO pelo PCSX2 com a sintaxe oficial `-batch -fullscreen -- caminho-da-iso`.
+- Validação de extensão, existência e tipo de arquivo antes de iniciar o PCSX2.
+- Retorno de erro quando o executável do PCSX2 não consegue iniciar.
+- Interface no próprio `index.html` para testar o Bridge, escanear uma pasta e abrir ISO no PC.
+- Assistente web de desempenho com diagnóstico de WebGL/WebGPU, perfil de desempenho/qualidade, tela cheia, gamepad e Wake Lock.
+- CORS habilitado para o site acessar o Bridge local.
 - Busca local de jogos e links salvos pelo usuário.
 - Página `index.html` com o emulador open source Play!.js dentro do navegador via WebAssembly.
 - Créditos e licença do núcleo Play! visíveis na interface.
 - PWA instalável com cache local dos assets WebAssembly.
 - Busca direta no tracker oficial de compatibilidade do Play! no GitHub.
 - Não inclui BIOS, ISOs ou conteúdo protegido por direitos autorais.
+
+## Abrir ISO no PCSX2 instalado no seu PC
+
+1. Instale o PCSX2 e faça a configuração inicial, incluindo a BIOS que você possui legitimamente.
+2. Instale o Node.js 18 ou superior.
+3. Inicie o Bridge:
+
+### Windows
+
+Dê duplo clique em `bridge/run-bridge.bat`.
+
+### Linux ou macOS
+
+```bash
+chmod +x bridge/run-bridge.sh
+./bridge/run-bridge.sh
+```
+
+4. Abra o site no navegador **no mesmo computador** e, na seção **Abrir ISO no PCSX2 deste PC**, clique em **Testar conexão**.
+5. Informe o caminho completo da ISO no computador, por exemplo:
+
+```text
+Windows: C:\Jogos\meu-jogo.iso
+Linux: /home/seu-usuario/Jogos/meu-jogo.iso
+macOS: /Users/seu-usuario/Jogos/meu-jogo.iso
+```
+
+6. Clique em **Abrir ISO no PCSX2**. O Bridge executará o PCSX2 com a ISO indicada.
+
+O Bridge ficará disponível em `http://127.0.0.1:8765` e usa o token padrão `pcsx2-token`. Se você alterar `PCSX2_BRIDGE_TOKEN`, use o mesmo token na aplicação. A porta pode ser alterada com `PCSX2_BRIDGE_PORT`.
+
+> Importante: um navegador comum não revela o caminho real de um arquivo local selecionado em `<input type="file">`. Por isso, para abrir o arquivo no PCSX2 desktop, informe o caminho local completo ou escaneie a pasta onde as suas ISOs estão armazenadas. O arquivo nunca é enviado ao servidor.
+
+## Sintaxe oficial usada
+
+O Bridge usa a sintaxe documentada pelo PCSX2:
+
+```text
+pcsx2-qt.exe -batch -fullscreen -- "C:\Jogos\meu-jogo.iso"
+```
+
+`--` informa ao PCSX2 que o argumento seguinte é o arquivo de boot, inclusive quando o caminho contém espaços.
 
 ## Emulador dentro da página web
 
@@ -24,83 +71,24 @@ O emulador aceita ISO, CSO, CHD, ISZ, BIN e ELF. O arquivo do jogo é escolhido 
 
 O emulador web é experimental e pode não executar todos os jogos compatíveis com PCSX2. Chrome ou Firefox recente é recomendado. Os arquivos redistribuídos seguem a licença do Play! em `third_party/play/LICENSE.txt`.
 
-## Como iniciar o Bridge portátil
+## Assistente para jogos exigentes
 
-1. Instale [Node.js 18 ou superior](https://nodejs.org/).
-2. Baixe o projeto pelo GitHub e extraia o ZIP.
-3. Execute um dos arquivos dentro da pasta `bridge/`.
+Na seção **Assistente de desempenho**, a página:
 
-### Windows
+- verifica se WebGL está disponível e sinaliza quando o navegador aparenta estar usando renderização por software;
+- detecta WebGPU quando o navegador oferece essa API;
+- oferece o perfil **Desempenho**, que reduz efeitos da interface e usa filtragem pixelada, ou **Qualidade**, que mantém a imagem suave;
+- entra em tela cheia após a primeira interação permitida pelo navegador e também oferece o botão manual;
+- detecta gamepads conectados e orienta o foco no quadro do jogo;
+- pode manter a tela acordada durante a sessão usando Wake Lock.
 
-Dê duplo clique em:
+Esses recursos ajudam o navegador, mas não substituem uma GPU. Se o diagnóstico indicar WebGL por software ou se o jogo exigir mais desempenho, use o botão **Abrir ISO no PCSX2** para executar o PCSX2 desktop, que tem acesso direto à placa de vídeo e às configurações de GPU do computador.
 
-```text
-bridge/run-bridge.bat
-```
-
-### Linux ou macOS
-
-```bash
-chmod +x bridge/run-bridge.sh
-./bridge/run-bridge.sh
-```
-
-Também é possível iniciar diretamente:
+## Desenvolvimento e validação
 
 ```bash
-cd bridge
-node bridge.mjs
+node --check bridge/bridge.mjs
+npm --prefix bridge start
 ```
 
-O Bridge ficará disponível em `http://127.0.0.1:8765`.
-
-## Conectar ao site Lovable
-
-Na aba **Bridge** do site, informe:
-
-| Campo | Valor |
-|---|---|
-| URL do Bridge | `http://127.0.0.1:8765` |
-| Token | `pcsx2-token` |
-
-O token pode ser alterado com `PCSX2_BRIDGE_TOKEN`. A porta pode ser alterada com `PCSX2_BRIDGE_PORT`.
-
-Exemplo no Windows PowerShell:
-
-```powershell
-$env:PCSX2_BRIDGE_TOKEN = "meu-token-local"
-$env:PCSX2_BRIDGE_PORT = "8765"
-node bridge/bridge.mjs
-```
-
-## Observações importantes
-
-O Bridge apenas conecta o site ao PCSX2 instalado localmente. O navegador não pode iniciar um `.exe` diretamente. O PCSX2, o BIOS e os jogos continuam sendo executados/fornecidos pelo computador do usuário.
-
-A barra de busca pesquisa a biblioteca local e os links cadastrados em **Links salvos**. Links `http(s)`, `magnet:` e `.torrent` são tratados apenas como marcadores fornecidos pelo usuário; o Bridge Node não pesquisa sites externos nem baixa torrents automaticamente.
-
-## Bridge Python legado
-
-O arquivo `pcsx2_web.py` continua no repositório para compatibilidade com a versão anterior. Para novas instalações, prefira o Bridge Node em `bridge/`, que não exige `pip` nem pacotes Python.
-
-## Licença e conteúdo
-
-Este projeto é distribuído sob a licença MIT. Ele não distribui o PCSX2, BIOS, ISOs, CHDs ou outros arquivos de jogos. Use somente software e conteúdo que você possui ou tem autorização para utilizar.
-
-
-## Melhorias recentes
-
-- Acesso rápido à pasta pública `isogames` do Google Drive.
-- Botão para copiar o link da pasta.
-- Área de arrastar e soltar para ISO, CHD, CSO, ISZ, BIN e ELF.
-- Validação de extensão antes de carregar o jogo.
-- Indicadores de carregamento, privacidade e erro.
-- O arquivo continua local no navegador; não há upload automático.
-
-A listagem automática dos arquivos do Google Drive ainda depende da Google Drive API. Sem uma API key, o botão abre a pasta pública para o usuário selecionar o arquivo manualmente.
-
-## Melhorias validadas no ecossistema oficial
-
-O botão **Pesquisar no tracker** consulta o repositório oficial [Play-Compatibility](https://github.com/jpd002/Play-Compatibility), usado pelo projeto Play! para registrar a compatibilidade dos jogos. A aplicação não inventa classificações locais: ela abre os resultados oficiais do GitHub para o nome pesquisado.
-
-O site também pode ser instalado como aplicativo pelo navegador. O service worker armazena em cache o HTML e os assets `Play.js`/`Play.wasm` para acelerar novas aberturas e permitir o carregamento da interface quando a conexão estiver instável. O jogo escolhido continua sendo fornecido pelo usuário.
+O projeto não inclui PCSX2, BIOS, ISOs, CHDs ou outros arquivos de jogos. Use somente software e conteúdo que você possui ou tem autorização para utilizar.
