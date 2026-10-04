@@ -91,4 +91,6 @@ node --check bridge/bridge.mjs
 npm --prefix bridge start
 ```
 
+O comparativo das soluções open source analisadas e os critérios adotados está em [`docs/COMPARATIVO-SISTEMAS.md`](docs/COMPARATIVO-SISTEMAS.md).
+
 O projeto não inclui PCSX2, BIOS, ISOs, CHDs ou outros arquivos de jogos. Use somente software e conteúdo que você possui ou tem autorização para utilizar.

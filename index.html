@@ -62,9 +62,14 @@
     .bridge-grid label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; }
     .bridge-grid input { width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); padding: 10px 11px; font: inherit; }
     .bridge-help { margin: 6px 0 14px; color: var(--muted); font-size: 13px; }
+    .library-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .library-toolbar input { flex: 1 1 240px; min-width: 180px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); padding: 10px 11px; font: inherit; }
+    .library-toolbar label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); padding: 0 8px; font-size: 13px; }
     .bridge-library { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
     .bridge-game { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: rgba(7,11,19,.5); }
-    .bridge-game span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bridge-game span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bridge-game small { color: var(--muted); }
+    .favorite { min-width: 38px; padding: 7px 9px; color: #ffd36a; }
     @media (max-width: 760px) { .bridge-grid { grid-template-columns: 1fr; } }
     .notes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
     .note { padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: rgba(17,26,42,.8); color: var(--muted); }
@@ -145,6 +150,10 @@
         <label class="button" style="cursor:pointer;">Selecionar pasta para escanear <input id="scanPath" type="text" placeholder="Caminho da pasta no PC" style="width:220px;border:0;background:transparent;color:var(--text);outline:0;"></label>
       </div>
       <div class="status" id="bridgeStatus" aria-live="polite"></div>
+      <div class="library-toolbar" aria-label="Pesquisar biblioteca local">
+        <input id="librarySearch" type="search" placeholder="Pesquisar jogo ou caminho…" autocomplete="off">
+        <label><input id="favoritesOnly" type="checkbox"> Somente favoritos</label>
+      </div>
       <div class="bridge-library" id="bridgeLibrary" aria-live="polite"></div>
     </section>
     <section class="source-card" style="margin-top: 14px;" aria-label="Compatibilidade dos jogos">
@@ -247,13 +256,30 @@
       if (!response.ok || data.error) throw new Error(data.error || `Bridge respondeu HTTP ${response.status}`);
       return data;
     }
-    function renderBridgeLibrary(games = []) {
-      bridgeLibrary.innerHTML = games.length ? games.map((game, index) => `<div class="bridge-game"><span title="${game.path}">${game.name} <small>(${game.path})</small></span><button data-play-index="${index}">Abrir</button></div>`).join('') : '';
+    let bridgeGames = [];
+    let favoritePaths = new Set(JSON.parse(localStorage.getItem('pcsx2-favorite-paths') || '[]'));
+    function escapeHTML(value) { return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character])); }
+    function renderBridgeLibrary(games = bridgeGames) {
+      bridgeGames = games;
+      const query = document.getElementById('librarySearch').value.trim().toLowerCase();
+      const onlyFavorites = document.getElementById('favoritesOnly').checked;
+      const visible = games.map((game, index) => ({ game, index })).filter(({ game }) => {
+        const matchesSearch = !query || `${game.name} ${game.path}`.toLowerCase().includes(query);
+        return matchesSearch && (!onlyFavorites || favoritePaths.has(game.path));
+      }).sort((a, b) => Number(favoritePaths.has(b.game.path)) - Number(favoritePaths.has(a.game.path)) || Number(b.game.last_played || 0) - Number(a.game.last_played || 0) || a.game.name.localeCompare(b.game.name));
+      bridgeLibrary.innerHTML = visible.length ? visible.map(({ game, index }) => `<div class="bridge-game"><button class="favorite" title="${favoritePaths.has(game.path) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}" data-favorite-index="${index}">${favoritePaths.has(game.path) ? '★' : '☆'}</button><span title="${escapeHTML(game.path)}"><strong>${escapeHTML(game.name)}</strong> <small>${escapeHTML(game.path)}</small></span><button data-play-index="${index}">Abrir</button></div>`).join('') : `<div class="status">${games.length ? 'Nenhum jogo corresponde ao filtro.' : 'Nenhum jogo cadastrado. Escaneie uma pasta ou informe uma ISO.'}</div>`;
+      bridgeLibrary.querySelectorAll('[data-favorite-index]').forEach(button => button.addEventListener('click', () => {
+        const game = bridgeGames[Number(button.dataset.favoriteIndex)];
+        if (favoritePaths.has(game.path)) favoritePaths.delete(game.path); else favoritePaths.add(game.path);
+        localStorage.setItem('pcsx2-favorite-paths', JSON.stringify([...favoritePaths])); renderBridgeLibrary();
+      }));
       bridgeLibrary.querySelectorAll('[data-play-index]').forEach(button => button.addEventListener('click', async () => {
-        try { setBridgeStatus('Iniciando PCSX2…'); const result = await bridgeRequest('/api/play', { method: 'POST', body: JSON.stringify({ index: Number(button.dataset.playIndex) }) }); setBridgeStatus(`PCSX2 iniciado com ${result.path}`, true); }
+        try { setBridgeStatus('Iniciando PCSX2…'); const result = await bridgeRequest('/api/play', { method: 'POST', body: JSON.stringify({ index: Number(button.dataset.playIndex) }) }); setBridgeStatus(`PCSX2 iniciado com ${result.path}`, true); const state = await bridgeRequest('/api/state'); renderBridgeLibrary(state.games); }
         catch (error) { setBridgeStatus(error.message); }
       }));
     }
+    document.getElementById('librarySearch').addEventListener('input', () => renderBridgeLibrary());
+    document.getElementById('favoritesOnly').addEventListener('change', () => renderBridgeLibrary());
     document.getElementById('bridgeTest').addEventListener('click', async () => {
       try { const state = await bridgeRequest('/api/state'); renderBridgeLibrary(state.games); setBridgeStatus(`Conectado. PCSX2 configurado: ${state.exe || 'não detectado'}`, true); }
       catch (error) { setBridgeStatus('Não conectou ao Bridge. Execute bridge/run-bridge.bat (Windows) ou bridge/run-bridge.sh (Linux/macOS).'); }
