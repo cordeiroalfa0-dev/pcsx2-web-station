@@ -30,11 +30,21 @@
     #root input[type=file]::file-selector-button { margin-right: 10px; border: 1px solid var(--accent); border-radius: 7px; padding: 9px 12px; background: var(--accent); color: #03101e; font-weight: 700; cursor: pointer; }
     #root .stats { color: #7ee2a8; font-variant-numeric: tabular-nums; }
     #root .version { color: #71809a; font-size: 12px; }
+    .source-panel { display: grid; grid-template-columns: 1.25fr .75fr; gap: 14px; margin-top: 16px; }
+    .source-card { padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: rgba(17,26,42,.88); }
+    .source-card h3 { margin: 0 0 6px; font-size: 16px; }
+    .source-card p { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+    .source-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .dropzone { margin: 14px 16px 0; padding: 13px 16px; border: 1px dashed #3c5d8c; border-radius: 9px; color: var(--muted); text-align: center; transition: .2s ease; }
+    .dropzone.active { border-color: var(--accent); background: rgba(54,163,255,.12); color: var(--text); }
+    .status { min-height: 20px; color: var(--muted); font-size: 13px; }
+    .status.ok { color: #7ee2a8; }
+    .status.error { color: #ff9c9c; }
     .notes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
     .note { padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: rgba(17,26,42,.8); color: var(--muted); }
     .note strong { display: block; color: var(--text); margin-bottom: 4px; }
     code { color: #b8ddff; }
-    @media (max-width: 760px) { header, .intro { align-items: flex-start; flex-direction: column; } .notes { grid-template-columns: 1fr; } .canvas-wrap { min-height: 520px; } }
+    @media (max-width: 760px) { header, .intro { align-items: flex-start; flex-direction: column; } .source-panel, .notes { grid-template-columns: 1fr; } .canvas-wrap { min-height: 520px; } }
   </style>
 </head>
 <body>
@@ -56,7 +66,24 @@
     <section class="emulator" id="emulator" aria-label="Emulador PlayStation 2">
       <div class="emulator-bar"><span><span class="dot"></span><strong>Play!.js</strong> · WebAssembly local</span><span>O jogo não é enviado ao servidor</span></div>
       <div class="canvas-wrap"><canvas id="outputCanvas" width="640" height="480" tabindex="-1"></canvas></div>
+      <div class="dropzone" id="dropzone">Arraste uma ISO, CHD, CSO, ISZ, BIN ou ELF para cá</div>
       <div id="root" aria-live="polite">Carregando o núcleo do emulador…</div>
+    </section>
+    <section class="source-panel" aria-label="Fontes de jogos">
+      <div class="source-card">
+        <h3>Google Drive · pasta pública</h3>
+        <p>A pasta <strong>isogames</strong> está configurada como atalho. A listagem automática exige uma chave da API do Google; por enquanto, abra a pasta e escolha/baixe o arquivo autorizado.</p>
+        <div class="source-actions">
+          <a class="button primary" href="https://drive.google.com/drive/folders/1e2rVm42_iBETPZb9gRKEWMMejlFe9Fns?usp=drive_link" target="_blank" rel="noopener">Abrir pasta isogames</a>
+          <button id="copyDrive">Copiar link</button>
+        </div>
+        <div class="status" id="driveStatus" aria-live="polite"></div>
+      </div>
+      <div class="source-card">
+        <h3>Privacidade</h3>
+        <p>O arquivo escolhido permanece no navegador. Não envie BIOS ou jogos que você não tenha autorização para usar.</p>
+        <div class="status ok">✓ Nenhum upload automático</div>
+      </div>
     </section>
     <section class="notes">
       <div class="note"><strong>Como iniciar</strong>Abra o seletor de arquivos dentro do quadro e escolha uma ISO, CSO, CHD, ISZ, BIN ou ELF autorizada.</div>
@@ -66,9 +93,38 @@
   </main>
   <script src="/vendor/playjs/main.js"></script>
   <script>
+    const DRIVE_FOLDER = 'https://drive.google.com/drive/folders/1e2rVm42_iBETPZb9gRKEWMMejlFe9Fns?usp=drive_link';
+    const SUPPORTED = /\.(iso|chd|cso|isz|bin|elf)$/i;
     document.getElementById('fullscreen').addEventListener('click', () => {
       document.getElementById('emulator').requestFullscreen?.();
     });
+    document.getElementById('copyDrive').addEventListener('click', async () => {
+      const status = document.getElementById('driveStatus');
+      try { await navigator.clipboard.writeText(DRIVE_FOLDER); status.textContent = 'Link copiado.'; status.className = 'status ok'; }
+      catch { status.textContent = DRIVE_FOLDER; status.className = 'status'; }
+    });
+    const dropzone = document.getElementById('dropzone');
+    function loadDroppedFile(file) {
+      if (!file || !SUPPORTED.test(file.name)) { dropzone.textContent = 'Formato não suportado. Use ISO, CHD, CSO, ISZ, BIN ou ELF.'; dropzone.classList.remove('active'); return; }
+      const input = document.querySelector('#root input[type=file]');
+      if (!input) { dropzone.textContent = 'O emulador ainda está carregando; tente novamente em alguns segundos.'; return; }
+      const transfer = new DataTransfer(); transfer.items.add(file); input.files = transfer.files; input.dispatchEvent(new Event('change', { bubbles: true }));
+      dropzone.textContent = 'Carregando ' + file.name + '…'; dropzone.classList.remove('active');
+    }
+    ['dragenter','dragover'].forEach(type => dropzone.addEventListener(type, e => { e.preventDefault(); dropzone.classList.add('active'); }));
+    ['dragleave','drop'].forEach(type => dropzone.addEventListener(type, e => { e.preventDefault(); if (type === 'dragleave') dropzone.classList.remove('active'); }));
+    dropzone.addEventListener('drop', e => loadDroppedFile(e.dataTransfer.files[0]));
+    const rootObserver = new MutationObserver(() => {
+      const input = document.querySelector('#root input[type=file]');
+      if (input && !input.dataset.enhanced) {
+        input.dataset.enhanced = '1';
+        input.accept = '.iso,.chd,.cso,.isz,.bin,.elf';
+        input.setAttribute('aria-label', 'Escolher imagem de jogo');
+        dropzone.textContent = 'Pronto. Escolha um arquivo ou arraste-o para cá.';
+        dropzone.classList.add('active'); setTimeout(() => dropzone.classList.remove('active'), 800);
+      }
+    });
+    rootObserver.observe(document.getElementById('root'), { childList: true, subtree: true });
   </script>
 </body>
 </html>

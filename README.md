@@ -83,3 +83,15 @@ O arquivo `pcsx2_web.py` continua no repositório para compatibilidade com a ver
 ## Licença e conteúdo
 
 Este projeto é distribuído sob a licença MIT. Ele não distribui o PCSX2, BIOS, ISOs, CHDs ou outros arquivos de jogos. Use somente software e conteúdo que você possui ou tem autorização para utilizar.
+
+
+## Melhorias recentes
+
+- Acesso rápido à pasta pública `isogames` do Google Drive.
+- Botão para copiar o link da pasta.
+- Área de arrastar e soltar para ISO, CHD, CSO, ISZ, BIN e ELF.
+- Validação de extensão antes de carregar o jogo.
+- Indicadores de carregamento, privacidade e erro.
+- O arquivo continua local no navegador; não há upload automático.
+
+A listagem automática dos arquivos do Google Drive ainda depende da Google Drive API. Sem uma API key, o botão abre a pasta pública para o usuário selecionar o arquivo manualmente.
