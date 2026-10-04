@@ -10,7 +10,8 @@ Launcher web local e Bridge para conectar um site ao emulador **PCSX2** instalad
 - API local compatível com o site: estado, configuração, biblioteca, varredura e inicialização de jogos.
 - CORS habilitado para o site Lovable acessar o Bridge local.
 - Busca local de jogos e links salvos pelo usuário.
-- Página `index.html` com o emulador Play!.js dentro do navegador via WebAssembly.
+- Página `index.html` com o emulador open source Play!.js dentro do navegador via WebAssembly.
+- Créditos e licença do núcleo Play! visíveis na interface.
 - Não inclui BIOS, ISOs ou conteúdo protegido por direitos autorais.
 
 ## Emulador dentro da página web
