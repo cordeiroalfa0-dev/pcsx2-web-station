@@ -93,7 +93,7 @@
 <body>
   <header>
     <a class="brand" href="/" aria-label="PCSX2 Web Station — início"><span class="brand-mark">P2</span><h1>PCSX2 Web Station</h1></a>
-    <nav class="site-nav" aria-label="Atalhos da página"><a href="#emulator">Jogar</a><a href="#remote">Servidor</a><a href="#bridge">Biblioteca</a><a href="#more">Mais</a></nav><div class="header-meta"><span>LOCAL GAME STATION</span><span class="badge">WEBASSEMBLY</span></div>
+    <nav class="site-nav" aria-label="Atalhos da página"><a href="#emulator">Jogar</a><a href="#remote">Servidor</a><a href="#bridge">PC local</a><a href="#more">Mais</a></nav><div class="header-meta"><span>LOCAL GAME STATION</span><span class="badge">WEBASSEMBLY</span></div>
   </header>
   <main>
     <section class="intro">
@@ -106,7 +106,8 @@
         <strong>Uma estação PS2 direto no navegador.</strong>
         <span>Seus arquivos ficam com você · pronto para começar</span>
         <div class="actions">
-        <button class="primary" id="fullscreen">Tela cheia</button>
+        <button class="primary" id="chooseIso">Escolher ISO</button>
+        <button id="fullscreen">Tela cheia</button>
         <button id="install" hidden>Instalar app</button>
         <a class="button" href="https://github.com/jpd002/Play-" target="_blank" rel="noopener">Código-fonte</a>
         </div>
@@ -115,7 +116,7 @@
     <section class="emulator" id="emulator" aria-label="Emulador PlayStation 2">
       <div class="emulator-bar"><span><span class="dot"></span><strong>Play!.js</strong> · pronto para jogar</span><span id="gpuBadge">Verificando GPU…</span></div>
       <div class="canvas-wrap"><canvas id="outputCanvas" width="640" height="480" tabindex="-1"></canvas></div>
-      <div class="dropzone" id="dropzone">Arraste uma ISO, CHD, CSO, ISZ, BIN ou ELF para cá</div>
+      <div class="dropzone" id="dropzone">Escolha sua ISO no botão acima ou arraste o arquivo para cá</div>
       <div id="root" aria-live="polite">Carregando o núcleo do emulador…</div>
     </section>
     <section class="performance-card" aria-label="Assistente de desempenho gráfico">
@@ -161,8 +162,8 @@
       </div>
     </section>
     <section class="bridge-card" id="bridge" aria-label="Conexão com o PCSX2 local">
-      <h3 style="margin:0 0 6px;">Abrir ISO no PCSX2 deste PC</h3>
-      <p class="bridge-help">Inicie o Bridge no mesmo computador onde o PCSX2 está instalado. O navegador não revela o caminho real de um arquivo escolhido; informe abaixo o caminho completo da ISO no PC.</p>
+      <h3 style="margin:0 0 6px;">Opcional: PCSX2 instalado no PC</h3>
+      <p class="bridge-help">Se você tem apenas as ISOs, ignore esta seção e use <strong>Escolher ISO</strong> no quadro acima — não precisa instalar o PCSX2. Esta área só serve para quem já tem o PCSX2 e o Bridge instalados.</p>
       <div class="bridge-grid">
         <label>URL do Bridge
           <input id="bridgeUrl" value="http://127.0.0.1:8765" spellcheck="false" autocomplete="off">
@@ -343,6 +344,11 @@
     ['dragenter','dragover'].forEach(type => dropzone.addEventListener(type, e => { e.preventDefault(); dropzone.classList.add('active'); }));
     ['dragleave','drop'].forEach(type => dropzone.addEventListener(type, e => { e.preventDefault(); if (type === 'dragleave') dropzone.classList.remove('active'); }));
     dropzone.addEventListener('drop', e => loadDroppedFile(e.dataTransfer.files[0]));
+    document.getElementById('chooseIso').addEventListener('click', () => {
+      const input = document.querySelector('#root input[type=file]');
+      if (input) input.click();
+      else { dropzone.textContent = 'O emulador ainda está carregando; tente novamente em alguns segundos.'; }
+    });
     const rootObserver = new MutationObserver(() => {
       const input = document.querySelector('#root input[type=file]');
       if (input && !input.dataset.enhanced) {
