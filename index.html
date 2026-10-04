@@ -45,6 +45,8 @@
     .load-status.loading::before { content:""; width:8px; height:8px; border:2px solid #566071; border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
     .load-status.ready { color:var(--accent); }
     .load-status.error { color:#ff9d9d; }
+    .keyboard-help { margin:0 18px 14px; padding:10px 12px; border:1px solid #303744; border-radius:8px; background:#10131a; color:var(--muted); font-size:12px; text-align:center; }
+    .keyboard-help kbd { display:inline-block; min-width:22px; margin:0 2px; padding:1px 5px; border:1px solid #566071; border-radius:4px; background:#1d2330; color:var(--text); font:11px ui-monospace,monospace; }
     @keyframes spin { to { transform:rotate(360deg); } }
     .canvas-wrap { display:grid; place-items:center; min-height:min(64vh,680px); padding:clamp(12px,3vw,32px); background:radial-gradient(ellipse at center,#252c3c 0,#0b0d12 56%,#050609 100%); }
     #outputCanvas { display:block; width:min(100%,960px); height:auto; aspect-ratio:4/3; background:#000; border:1px solid #424a58; border-radius:5px; box-shadow:0 10px 36px rgba(0,0,0,.38); }
@@ -99,10 +101,11 @@
     </section>
     <section class="emulator" id="emulator" aria-label="Emulador PlayStation 2">
       <div class="emulator-bar"><span><span class="dot"></span><strong>Play!.js</strong> · pronto para jogar</span><span class="load-status loading" id="loadStatus" role="status" aria-live="polite">Inicializando o emulador…</span></div>
-      <div class="canvas-wrap"><canvas id="outputCanvas" width="640" height="480" tabindex="-1"></canvas></div>
+      <div class="canvas-wrap"><canvas id="outputCanvas" width="640" height="480" tabindex="0" aria-label="Tela do jogo; clique aqui para usar o teclado"></canvas></div>
       <div class="dropzone" id="dropzone">Escolha sua ISO no botão acima ou arraste o arquivo para cá</div>
       <input class="visually-hidden" id="isoPicker" type="file" accept=".iso,.chd,.cso,.isz,.bin,.elf" aria-label="Escolher imagem de jogo">
       <div id="root" aria-live="polite">Carregando o emulador…</div>
+      <div class="keyboard-help" aria-label="Controles do teclado">Teclado: <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> direcional · <kbd>Enter</kbd> Start · <kbd>Shift</kbd> Select · <kbd>Z</kbd> Cruz · <kbd>X</kbd> Quadrado · <kbd>A</kbd> Triângulo · <kbd>S</kbd> Círculo · <kbd>Q</kbd>/<kbd>W</kbd> L1/R1</div>
     </section>
     <section class="help-grid" id="help" aria-label="Informações rápidas">
       <div class="help-card"><strong>Formatos aceitos</strong>ISO, CHD, CSO, ISZ, BIN e ELF.</div>
@@ -125,7 +128,17 @@
     }
     fullscreenButton.addEventListener('click', toggleFullscreen);
     document.addEventListener('fullscreenchange', () => { fullscreenButton.textContent = document.fullscreenElement ? 'Sair da tela cheia' : 'Tela cheia'; });
-    document.getElementById('outputCanvas').addEventListener('click', () => document.getElementById('outputCanvas').focus());
+    const outputCanvas = document.getElementById('outputCanvas');
+    const keyboardKeys = new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter','Shift','z','x','a','s','q','w','1','3']);
+    outputCanvas.addEventListener('click', () => outputCanvas.focus());
+    outputCanvas.addEventListener('pointerdown', () => outputCanvas.focus());
+    document.addEventListener('keydown', event => {
+      if (event.target === isoPicker) return;
+      if (keyboardKeys.has(event.key) || keyboardKeys.has(event.code)) {
+        outputCanvas.focus();
+        if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(event.key)) event.preventDefault();
+      }
+    }, { passive:false });
     let pendingFile = null;
     let loadStatusTimer = null;
     const loadStatus = document.getElementById('loadStatus');
@@ -158,6 +171,7 @@
       const transfer = new DataTransfer(); transfer.items.add(file); input.files = transfer.files; input.dispatchEvent(new Event('change', { bubbles:true }));
       pendingFile = null;
       showIsoProgress(file.name);
+      outputCanvas.focus();
       dropzone.textContent = 'Carregando ' + file.name + '…'; dropzone.classList.remove('active');
     }
     ['dragenter','dragover'].forEach(type => dropzone.addEventListener(type, event => { event.preventDefault(); dropzone.classList.add('active'); }));
