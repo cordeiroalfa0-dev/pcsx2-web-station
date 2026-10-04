@@ -105,7 +105,7 @@
       <div class="dropzone" id="dropzone">Escolha sua ISO no botão acima ou arraste o arquivo para cá</div>
       <input class="visually-hidden" id="isoPicker" type="file" accept=".iso,.chd,.cso,.isz,.bin,.elf" aria-label="Escolher imagem de jogo">
       <div id="root" aria-live="polite">Carregando o emulador…</div>
-      <div class="keyboard-help" aria-label="Controles do teclado">Teclado: <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> direcional · <kbd>Enter</kbd> Start · <kbd>Shift</kbd> Select · <kbd>Z</kbd> Cruz · <kbd>X</kbd> Quadrado · <kbd>A</kbd> Triângulo · <kbd>S</kbd> Círculo · <kbd>Q</kbd>/<kbd>W</kbd> L1/R1</div>
+      <div class="keyboard-help" aria-label="Controles do teclado">Teclado: <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> direcional · <kbd>Enter</kbd> Start · <kbd>Backspace</kbd> Select · <kbd>A</kbd> Quadrado · <kbd>Z</kbd> Cruz · <kbd>S</kbd> Triângulo · <kbd>X</kbd> Círculo · <kbd>1</kbd>/<kbd>8</kbd> L1/R1</div>
     </section>
     <section class="help-grid" id="help" aria-label="Informações rápidas">
       <div class="help-card"><strong>Formatos aceitos</strong>ISO, CHD, CSO, ISZ, BIN e ELF.</div>
@@ -129,15 +129,19 @@
     fullscreenButton.addEventListener('click', toggleFullscreen);
     document.addEventListener('fullscreenchange', () => { fullscreenButton.textContent = document.fullscreenElement ? 'Sair da tela cheia' : 'Tela cheia'; });
     const outputCanvas = document.getElementById('outputCanvas');
-    const keyboardKeys = new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter','Shift','z','x','a','s','q','w','1','3']);
+    const keyboardKeys = new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter','NumpadEnter','Backspace','a','s','x','z','1','8','2','9','3','0','f','h','t','g','j','l','i','k']);
     outputCanvas.addEventListener('click', () => outputCanvas.focus());
     outputCanvas.addEventListener('pointerdown', () => outputCanvas.focus());
     document.addEventListener('keydown', event => {
       if (event.target === isoPicker) return;
       if (keyboardKeys.has(event.key) || keyboardKeys.has(event.code)) {
         outputCanvas.focus();
-        if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(event.key)) event.preventDefault();
+        if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter','NumpadEnter',' '].includes(event.key) || event.code === 'NumpadEnter') event.preventDefault();
+        if (event.type === 'keydown' && event.code === 'NumpadEnter') document.dispatchEvent(new KeyboardEvent('keydown', { key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true, cancelable:true }));
       }
+    }, { passive:false });
+    document.addEventListener('keyup', event => {
+      if (event.code === 'NumpadEnter') document.dispatchEvent(new KeyboardEvent('keyup', { key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true, cancelable:true }));
     }, { passive:false });
     let pendingFile = null;
     let loadStatusTimer = null;
