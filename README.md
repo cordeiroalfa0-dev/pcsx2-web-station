@@ -15,11 +15,11 @@ Launcher web local e Bridge para conectar um site ao emulador **PCSX2** instalad
 
 ## Emulador dentro da página web
 
-Ao publicar este repositório no GitHub Pages, o arquivo `index.html` mostra o **Play!.js** dentro da página. Play!.js é a versão web experimental do projeto open source [Play!](https://github.com/jpd002/Play-), carregada dentro do navegador com WebAssembly.
+Ao publicar este repositório na Vercel, o arquivo `index.html` mostra o **Play!.js** dentro da página. Os arquivos WebAssembly públicos do Play!.js são hospedados localmente em `vendor/playjs/` e os módulos de execução ficam na raiz para o carregamento correto na Vercel. Play!.js é a versão web experimental do projeto open source [Play!](https://github.com/jpd002/Play-), carregada dentro do navegador com WebAssembly.
 
 O emulador aceita ISO, CSO, CHD, ISZ, BIN e ELF. O arquivo do jogo é escolhido pelo usuário no próprio quadro do emulador e não é enviado para este repositório. O Play!.js usa BIOS HLE integrada e não aceita BIOS externa; para usar uma BIOS própria, continue usando o PCSX2 desktop pelo Bridge.
 
-O emulador web é experimental e pode não executar todos os jogos compatíveis com PCSX2. Chrome ou Firefox recente é recomendado.
+O emulador web é experimental e pode não executar todos os jogos compatíveis com PCSX2. Chrome ou Firefox recente é recomendado. Os arquivos redistribuídos seguem a licença do Play! em `third_party/play/LICENSE.txt`.
 
 ## Como iniciar o Bridge portátil
 

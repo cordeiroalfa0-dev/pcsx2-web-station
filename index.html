@@ -19,13 +19,22 @@
     button, a.button { border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--text); padding: 10px 14px; text-decoration: none; cursor: pointer; font: inherit; }
     button:hover, a.button:hover { border-color: var(--accent); }
     .primary { background: var(--accent); color: #03101e; border-color: var(--accent); font-weight: 700; }
-    .emulator { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #000; box-shadow: 0 20px 70px rgba(0,0,0,.35); }
-    .emulator iframe { display: block; width: 100%; height: min(74vh, 820px); min-height: 560px; border: 0; background: #000; }
+    .emulator { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #05070b; box-shadow: 0 20px 70px rgba(0,0,0,.35); }
+    .emulator-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: #0d1524; color: var(--muted); font-size: 13px; }
+    .emulator-bar strong { color: var(--text); }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f4b740; margin-right: 7px; }
+    .canvas-wrap { display: grid; place-items: center; min-height: min(66vh, 720px); padding: clamp(10px, 2vw, 24px); background: radial-gradient(circle, #182640 0%, #05070b 65%); }
+    #outputCanvas { display: block; width: min(100%, 960px); height: auto; aspect-ratio: 4 / 3; background: #000; border: 1px solid #2c3d5d; border-radius: 7px; image-rendering: auto; }
+    #root { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; padding: 14px 16px; min-height: 66px; background: #0d1524; color: var(--muted); }
+    #root input[type=file] { max-width: 100%; color: var(--muted); }
+    #root input[type=file]::file-selector-button { margin-right: 10px; border: 1px solid var(--accent); border-radius: 7px; padding: 9px 12px; background: var(--accent); color: #03101e; font-weight: 700; cursor: pointer; }
+    #root .stats { color: #7ee2a8; font-variant-numeric: tabular-nums; }
+    #root .version { color: #71809a; font-size: 12px; }
     .notes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
     .note { padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: rgba(17,26,42,.8); color: var(--muted); }
     .note strong { display: block; color: var(--text); margin-bottom: 4px; }
     code { color: #b8ddff; }
-    @media (max-width: 760px) { header, .intro { align-items: flex-start; flex-direction: column; } .notes { grid-template-columns: 1fr; } .emulator iframe { min-height: 520px; height: 72vh; } }
+    @media (max-width: 760px) { header, .intro { align-items: flex-start; flex-direction: column; } .notes { grid-template-columns: 1fr; } .canvas-wrap { min-height: 520px; } }
   </style>
 </head>
 <body>
@@ -37,7 +46,7 @@
     <section class="intro">
       <div>
         <h2>Emulador PS2 no navegador</h2>
-        <p>O emulador experimental Play!.js roda no navegador usando WebAssembly. Use o seletor de arquivo dentro do emulador para escolher uma imagem de jogo que você possui.</p>
+        <p>O emulador experimental Play!.js roda no navegador usando WebAssembly. Escolha uma imagem de jogo autorizada no botão abaixo — o arquivo permanece no seu navegador.</p>
       </div>
       <div class="actions">
         <button class="primary" id="fullscreen">Tela cheia</button>
@@ -45,7 +54,9 @@
       </div>
     </section>
     <section class="emulator" id="emulator" aria-label="Emulador PlayStation 2">
-      <iframe title="Play!.js — emulador PlayStation 2 para navegador" src="https://playjs.purei.org/" allow="fullscreen; gamepad" loading="eager"></iframe>
+      <div class="emulator-bar"><span><span class="dot"></span><strong>Play!.js</strong> · WebAssembly local</span><span>O jogo não é enviado ao servidor</span></div>
+      <div class="canvas-wrap"><canvas id="outputCanvas" width="640" height="480" tabindex="-1"></canvas></div>
+      <div id="root" aria-live="polite">Carregando o núcleo do emulador…</div>
     </section>
     <section class="notes">
       <div class="note"><strong>Como iniciar</strong>Abra o seletor de arquivos dentro do quadro e escolha uma ISO, CSO, CHD, ISZ, BIN ou ELF autorizada.</div>
@@ -53,11 +64,10 @@
       <div class="note"><strong>Compatibilidade</strong>É uma versão experimental. Chrome ou Firefox recente e um computador razoável são recomendados.</div>
     </section>
   </main>
+  <script src="/vendor/playjs/main.js"></script>
   <script>
     document.getElementById('fullscreen').addEventListener('click', () => {
-      const frame = document.querySelector('iframe');
-      if (frame.requestFullscreen) frame.requestFullscreen();
-      else document.getElementById('emulator').requestFullscreen?.();
+      document.getElementById('emulator').requestFullscreen?.();
     });
   </script>
 </body>
