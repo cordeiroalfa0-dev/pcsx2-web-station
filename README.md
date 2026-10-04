@@ -14,6 +14,7 @@ Launcher web local e Bridge para conectar um site ao emulador **PCSX2** instalad
 - Interface no próprio `index.html` para testar o Bridge, escanear uma pasta e abrir ISO no PC.
 - Assistente web de desempenho com diagnóstico de WebGL/WebGPU, perfil de desempenho/qualidade, tela cheia, gamepad e Wake Lock.
 - Interface de biblioteca com visual moderno, cards de jogos, favoritos e ação rápida **Jogar agora**.
+- Preparação para PCSX2 server-side, com contêiner Docker, armazenamento persistente e abertura da sessão remota pela interface.
 - CORS habilitado para o site acessar o Bridge local.
 - Busca local de jogos e links salvos pelo usuário.
 - Página `index.html` com o emulador open source Play!.js dentro do navegador via WebAssembly.
@@ -95,3 +96,7 @@ npm --prefix bridge start
 O comparativo das soluções open source analisadas e os critérios adotados está em [`docs/COMPARATIVO-SISTEMAS.md`](docs/COMPARATIVO-SISTEMAS.md).
 
 O projeto não inclui PCSX2, BIOS, ISOs, CHDs ou outros arquivos de jogos. Use somente software e conteúdo que você possui ou tem autorização para utilizar.
+
+## PCSX2 hospedado no servidor
+
+Para rodar o PCSX2 no servidor e jogar pelo navegador, consulte [`docs/PCSX2-SERVIDOR.md`](docs/PCSX2-SERVIDOR.md) e os arquivos em `deploy/pcsx2-server/`. O servidor precisa ter Docker e ficar ligado; uma GPU compatível é opcional, mas recomendada para jogos exigentes.

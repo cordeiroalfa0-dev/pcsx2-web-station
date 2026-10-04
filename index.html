@@ -45,6 +45,11 @@
     .status.error { color: #ff9c9c; }
     .bridge-card { margin-top: 16px; padding: 18px; border: 1px solid #2d6b9e; border-radius: 12px; background: linear-gradient(135deg, rgba(17,45,72,.92), rgba(17,26,42,.92)); }
     .performance-card { margin-top: 16px; padding: 18px; border: 1px solid #3c5d8c; border-radius: 12px; background: rgba(17,26,42,.88); }
+    .remote-card { margin-top: 16px; padding: 20px; border: 1px solid #6f58bb; border-radius: 16px; background: radial-gradient(circle at 90% 0%, rgba(155,123,255,.22), transparent 35%), linear-gradient(145deg, rgba(36,31,75,.95), rgba(17,26,42,.92)); }
+    .remote-grid { display: grid; grid-template-columns: 1fr auto; gap: 9px; align-items: end; }
+    .remote-grid label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; }
+    .remote-grid input { width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); padding: 10px 11px; font: inherit; }
+    @media (max-width: 650px) { .remote-grid { grid-template-columns: 1fr; } }
     .performance-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 9px; align-items: end; }
     .performance-grid label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; }
     .performance-grid select { width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); padding: 10px 11px; font: inherit; }
@@ -126,6 +131,17 @@
       </div>
       <ul class="performance-checks" id="performanceChecks" aria-live="polite"></ul>
       <div class="status" id="gamepadStatus" aria-live="polite">Gamepad: procurando controle…</div>
+    </section>
+    <section class="remote-card" aria-label="PCSX2 hospedado no servidor">
+      <h3 style="margin:0 0 6px;">PCSX2 na web · servidor remoto</h3>
+      <p class="bridge-help">O PCSX2 roda no servidor e esta página abre a sessão gráfica no navegador. O seu computador não precisa instalar o emulador.</p>
+      <div class="remote-grid">
+        <label>URL HTTPS da sessão PCSX2
+          <input id="remotePcsx2Url" placeholder="https://seu-servidor:3001" spellcheck="false" autocomplete="url">
+        </label>
+        <button class="primary" id="openRemotePcsx2">Abrir sessão remota</button>
+      </div>
+      <div class="status" id="remotePcsx2Status" aria-live="polite">Configure a URL do servidor para jogar pelo navegador.</div>
     </section>
     <section class="source-panel" aria-label="Fontes de jogos">
       <div class="source-card">
@@ -238,6 +254,14 @@
     window.addEventListener('gamepadconnected', updateGamepadStatus);
     window.addEventListener('gamepaddisconnected', updateGamepadStatus);
     detectGraphics(); updateGamepadStatus();
+    const remotePcsx2Url = document.getElementById('remotePcsx2Url');
+    const remotePcsx2Status = document.getElementById('remotePcsx2Status');
+    remotePcsx2Url.value = localStorage.getItem('pcsx2-remote-url') || '';
+    document.getElementById('openRemotePcsx2').addEventListener('click', () => {
+      const value = remotePcsx2Url.value.trim();
+      try { const url = new URL(value); if (!['https:', 'http:'].includes(url.protocol)) throw new Error(); localStorage.setItem('pcsx2-remote-url', value); window.open(url.href, '_blank', 'noopener'); remotePcsx2Status.textContent = 'Sessão PCSX2 remota aberta em uma nova aba.'; remotePcsx2Status.className = 'status ok'; }
+      catch { remotePcsx2Status.textContent = 'Informe uma URL válida, preferencialmente HTTPS, como https://seu-servidor:3001.'; remotePcsx2Status.className = 'status error'; }
+    });
     document.getElementById('copyDrive').addEventListener('click', async () => {
       const status = document.getElementById('driveStatus');
       try { await navigator.clipboard.writeText(DRIVE_FOLDER); status.textContent = 'Link copiado.'; status.className = 'status ok'; }

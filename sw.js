@@ -1,4 +1,4 @@
-const CACHE = 'pcsx2-web-station-v3';
+const CACHE = 'pcsx2-web-station-v4';
 const CORE = ['/', '/index.html', '/Play.js', '/Play.wasm', '/vendor/playjs/main.js', '/vendor/playjs/main.css', '/manifest.webmanifest'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting()));

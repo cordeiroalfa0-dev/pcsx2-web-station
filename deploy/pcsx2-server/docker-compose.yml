@@ -1,0 +1,21 @@
+services:
+  pcsx2:
+    image: lscr.io/linuxserver/pcsx2:latest
+    container_name: pcsx2-web
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/Sao_Paulo}
+      - CUSTOM_USER=${CUSTOM_USER:?Defina CUSTOM_USER no arquivo .env}
+      - PASSWORD=${PASSWORD:?Defina PASSWORD no arquivo .env}
+      - TITLE=PCSX2 Web Station
+    volumes:
+      - ./config:/config
+      - ./games:/games
+    ports:
+      - "${PCSX2_HTTPS_PORT:-3001}:3001"
+      - "${PCSX2_HTTP_PORT:-3000}:3000"
+    shm_size: "1gb"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
