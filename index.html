@@ -133,6 +133,13 @@
       loadStatus.textContent = message;
       loadStatus.className = 'load-status ' + state;
     }
+    window.addEventListener('unhandledrejection', event => {
+      const message = String(event.reason?.message || event.reason || '');
+      if (/clearDepth|WebGL|context/i.test(message)) {
+        setLoadStatus('WebGL indisponível · ative a aceleração gráfica no navegador', 'error');
+        dropzone.textContent = 'O navegador não conseguiu criar o gráfico 3D. Verifique a aceleração de hardware e recarregue.';
+      }
+    });
     function showIsoProgress(fileName) {
       clearTimeout(loadStatusTimer);
       setLoadStatus('Abrindo ' + fileName + '…', 'loading');
