@@ -53,6 +53,11 @@
     .help-card strong { display:block; margin-bottom:5px; color:var(--text); font-size:14px; }
     footer { padding:20px 0 50px; color:#7d8491; text-align:center; font-size:12px; }
     footer a { color:var(--accent); }
+    #emulator:fullscreen { display:flex; flex-direction:column; width:100vw; height:100vh; border:0; border-radius:0; }
+    #emulator:fullscreen .emulator-bar { flex:0 0 auto; }
+    #emulator:fullscreen .canvas-wrap { flex:1; min-height:0; padding:0; }
+    #emulator:fullscreen #outputCanvas { width:100%; height:100%; max-width:none; max-height:none; border:0; border-radius:0; object-fit:contain; }
+    #emulator:fullscreen .dropzone, #emulator:fullscreen #root { flex:0 0 auto; }
     @media (min-width:801px) { .hero{padding:clamp(34px,5vw,58px) 0 28px; gap:32px}.hero h2{font-size:clamp(42px,5.2vw,68px)}.hero p{margin-top:16px; font-size:14px}.hero-card{padding-top:10px}.hero-card .actions{margin-top:16px}.canvas-wrap{min-height:min(54vh,560px)} }
     @media (max-width:800px) { .hero{grid-template-columns:1fr}.hero-card{max-width:450px}.help-grid{grid-template-columns:1fr 1fr} }
     @media (max-width:520px) { header{padding:12px 16px; gap:8px}.header-note{display:none}.site-nav{gap:2px}.site-nav a{padding:7px 8px}main{width:calc(100% - 24px)}.hero{padding-top:52px}.hero h2{font-size:clamp(43px,14vw,68px)}.emulator-bar{align-items:flex-start;flex-direction:column;gap:5px}.canvas-wrap{min-height:470px}.help-grid{grid-template-columns:1fr}.help-card{padding:16px} }
@@ -102,8 +107,15 @@
     const emulator = document.getElementById('emulator');
     const dropzone = document.getElementById('dropzone');
     const SUPPORTED = /\.(iso|chd|cso|isz|bin|elf)$/i;
-    async function enterFullscreen() { if (!document.fullscreenElement) { try { await emulator.requestFullscreen?.(); } catch {} } }
-    document.getElementById('fullscreen').addEventListener('click', enterFullscreen);
+    const fullscreenButton = document.getElementById('fullscreen');
+    async function toggleFullscreen() {
+      try {
+        if (document.fullscreenElement) await document.exitFullscreen?.();
+        else await emulator.requestFullscreen?.();
+      } catch {}
+    }
+    fullscreenButton.addEventListener('click', toggleFullscreen);
+    document.addEventListener('fullscreenchange', () => { fullscreenButton.textContent = document.fullscreenElement ? 'Sair da tela cheia' : 'Tela cheia'; });
     document.getElementById('outputCanvas').addEventListener('click', () => document.getElementById('outputCanvas').focus());
     document.getElementById('chooseIso').addEventListener('click', () => {
       const input = document.querySelector('#root input[type=file]');
