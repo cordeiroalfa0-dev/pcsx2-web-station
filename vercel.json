@@ -2,9 +2,13 @@
   "version": 2,
   "builds": [
     { "src": "index.html", "use": "@vercel/static" },
+    { "src": "manifest.webmanifest", "use": "@vercel/static" },
+    { "src": "sw.js", "use": "@vercel/static" },
+    { "src": "icon.svg", "use": "@vercel/static" },
     { "src": "Play.js", "use": "@vercel/static" },
     { "src": "Play.wasm", "use": "@vercel/static" },
-    { "src": "vendor/playjs/**", "use": "@vercel/static" }
+    { "src": "vendor/playjs/**", "use": "@vercel/static" },
+    { "src": "third_party/play/**", "use": "@vercel/static" }
   ],
   "headers": [
     {

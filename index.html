@@ -45,6 +45,7 @@
     .dropzone.active { border-color:var(--accent); background:rgba(215,255,67,.08); color:var(--text); }
     #root { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:14px; min-height:66px; padding:15px 18px; background:#151920; color:var(--muted); }
     #root input[type=file] { max-width:100%; color:var(--muted); }
+    .visually-hidden { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }
     #root input[type=file]::file-selector-button { margin-right:10px; border:0; border-radius:6px; padding:9px 12px; background:var(--accent); color:var(--accent-ink); font-weight:700; cursor:pointer; }
     #root .stats { color:var(--accent); font-variant-numeric:tabular-nums; }
     #root .version { color:#707888; font-size:12px; }
@@ -93,6 +94,7 @@
       <div class="emulator-bar"><span><span class="dot"></span><strong>Play!.js</strong> · pronto para jogar</span><span>Web local</span></div>
       <div class="canvas-wrap"><canvas id="outputCanvas" width="640" height="480" tabindex="-1"></canvas></div>
       <div class="dropzone" id="dropzone">Escolha sua ISO no botão acima ou arraste o arquivo para cá</div>
+      <input class="visually-hidden" id="isoPicker" type="file" accept=".iso,.chd,.cso,.isz,.bin,.elf" aria-label="Escolher imagem de jogo">
       <div id="root" aria-live="polite">Carregando o emulador…</div>
     </section>
     <section class="help-grid" id="help" aria-label="Informações rápidas">
@@ -117,15 +119,19 @@
     fullscreenButton.addEventListener('click', toggleFullscreen);
     document.addEventListener('fullscreenchange', () => { fullscreenButton.textContent = document.fullscreenElement ? 'Sair da tela cheia' : 'Tela cheia'; });
     document.getElementById('outputCanvas').addEventListener('click', () => document.getElementById('outputCanvas').focus());
-    document.getElementById('chooseIso').addEventListener('click', () => {
-      const input = document.querySelector('#root input[type=file]');
-      if (input) input.click(); else dropzone.textContent = 'O emulador ainda está carregando; tente novamente em alguns segundos.';
+    let pendingFile = null;
+    const isoPicker = document.getElementById('isoPicker');
+    document.getElementById('chooseIso').addEventListener('click', () => isoPicker.click());
+    isoPicker.addEventListener('change', () => {
+      const file = isoPicker.files?.[0];
+      if (file) loadDroppedFile(file);
     });
     function loadDroppedFile(file) {
       if (!file || !SUPPORTED.test(file.name)) { dropzone.textContent = 'Formato não suportado. Use ISO, CHD, CSO, ISZ, BIN ou ELF.'; dropzone.classList.remove('active'); return; }
       const input = document.querySelector('#root input[type=file]');
-      if (!input) { dropzone.textContent = 'O emulador ainda está carregando; tente novamente em alguns segundos.'; return; }
+      if (!input) { pendingFile = file; dropzone.textContent = 'Arquivo selecionado. Aguardando o emulador terminar de carregar…'; return; }
       const transfer = new DataTransfer(); transfer.items.add(file); input.files = transfer.files; input.dispatchEvent(new Event('change', { bubbles:true }));
+      pendingFile = null;
       dropzone.textContent = 'Carregando ' + file.name + '…'; dropzone.classList.remove('active');
     }
     ['dragenter','dragover'].forEach(type => dropzone.addEventListener(type, event => { event.preventDefault(); dropzone.classList.add('active'); }));
@@ -136,6 +142,7 @@
       if (input && !input.dataset.enhanced) {
         input.dataset.enhanced = '1'; input.accept = '.iso,.chd,.cso,.isz,.bin,.elf'; input.setAttribute('aria-label', 'Escolher imagem de jogo');
         dropzone.textContent = 'Pronto. Escolha um arquivo ou arraste-o para cá.'; dropzone.classList.add('active'); setTimeout(() => dropzone.classList.remove('active'), 800);
+        if (pendingFile) loadDroppedFile(pendingFile);
       }
     });
     rootObserver.observe(document.getElementById('root'), { childList:true, subtree:true });
