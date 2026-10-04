@@ -27,11 +27,14 @@ A análise foi feita antes das alterações desta versão e comparou projetos op
 - Ordenação com favoritos primeiro, depois jogos usados recentemente.
 - Proteção contra inserção de nomes e caminhos da biblioteca diretamente como HTML.
 - Interface mais adequada para gamepad e abertura rápida.
+- Redesign visual inspirado na organização de biblioteca do RomM e no fluxo gamepad-first do EmulatorJS/OpenGamepadUI, implementado em CSS/HTML próprio.
 - Mantida a abertura local pelo PCSX2, sem pesquisa ou download de jogos de terceiros.
 
 ## O que não foi copiado
 
 Não foram adicionados downloaders de ISOs, indexadores de torrents, scraping de Google Drive ou qualquer recurso para localizar jogos sem autorização. A biblioteca continua limitada aos arquivos existentes no computador do usuário e aos links que ele próprio cadastrar.
+
+Também não foram copiados código, logos ou assets de projetos GPL/AGPL. RomM é AGPL-3.0, EmulatorJS e OpenGamepadUI são GPL-3.0, enquanto este repositório continua sob MIT. A nova camada visual usa apenas a estrutura e os padrões de interação como referência.
 
 ## Validação do repositório do usuário
 

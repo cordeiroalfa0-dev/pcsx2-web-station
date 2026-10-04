@@ -13,6 +13,7 @@ Launcher web local e Bridge para conectar um site ao emulador **PCSX2** instalad
 - Retorno de erro quando o executável do PCSX2 não consegue iniciar.
 - Interface no próprio `index.html` para testar o Bridge, escanear uma pasta e abrir ISO no PC.
 - Assistente web de desempenho com diagnóstico de WebGL/WebGPU, perfil de desempenho/qualidade, tela cheia, gamepad e Wake Lock.
+- Interface de biblioteca com visual moderno, cards de jogos, favoritos e ação rápida **Jogar agora**.
 - CORS habilitado para o site acessar o Bridge local.
 - Busca local de jogos e links salvos pelo usuário.
 - Página `index.html` com o emulador open source Play!.js dentro do navegador via WebAssembly.

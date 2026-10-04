@@ -7,14 +7,16 @@
   <meta name="description" content="Emulador PlayStation 2 experimental no navegador usando Play!.js e WebAssembly.">
   <link rel="manifest" href="/manifest.webmanifest">
   <style>
-    :root { color-scheme: dark; --bg: #070b13; --panel: #111a2a; --line: #253553; --text: #edf4ff; --muted: #9fb0ca; --accent: #36a3ff; }
+    :root { color-scheme: dark; --bg: #080b12; --panel: #111827; --panel-2: #162238; --line: #283b5b; --text: #f3f7ff; --muted: #9cabc2; --accent: #55b7ff; --accent-2: #9b7bff; --success: #77e2ad; }
     * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 10% 0%, #132748, var(--bg) 42%); color: var(--text); font: 15px/1.5 system-ui, -apple-system, Segoe UI, sans-serif; }
-    header { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px clamp(18px, 4vw, 56px); border-bottom: 1px solid var(--line); background: rgba(7, 11, 19, .8); backdrop-filter: blur(12px); }
+    body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 12% -10%, rgba(62,132,223,.35), transparent 34%), radial-gradient(circle at 92% 18%, rgba(119,84,216,.18), transparent 28%), var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, Segoe UI, sans-serif; }
+    header { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 15px clamp(18px, 4vw, 56px); border-bottom: 1px solid rgba(85,183,255,.18); background: rgba(8, 11, 18, .86); backdrop-filter: blur(18px); }
     h1 { margin: 0; font-size: clamp(20px, 3vw, 30px); letter-spacing: -.03em; }
-    .badge { color: #05101d; background: var(--accent); border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 800; }
-    main { width: min(1280px, calc(100% - 32px)); margin: 24px auto 48px; }
-    .intro { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
+    .badge { color: #06121f; background: linear-gradient(100deg, var(--accent), #9be2ff); border-radius: 999px; padding: 5px 11px; font-size: 11px; letter-spacing: .08em; font-weight: 900; }
+    main { width: min(1320px, calc(100% - 32px)); margin: 28px auto 64px; }
+    .intro { display: flex; align-items: end; justify-content: space-between; gap: 30px; margin-bottom: 22px; padding: 8px 4px; }
+    .intro h2 { max-width: 620px; margin: 0; font-size: clamp(28px, 4vw, 48px); line-height: 1.04; letter-spacing: -.045em; }
+    .eyebrow { display: block; margin-bottom: 10px; color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: .16em; }
     .intro p { max-width: 780px; margin: 6px 0 0; color: var(--muted); }
     .actions { display: flex; flex-wrap: wrap; gap: 10px; }
     button, a.button { border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--text); padding: 10px 14px; text-decoration: none; cursor: pointer; font: inherit; }
@@ -32,7 +34,7 @@
     #root .stats { color: #7ee2a8; font-variant-numeric: tabular-nums; }
     #root .version { color: #71809a; font-size: 12px; }
     .source-panel { display: grid; grid-template-columns: 1.25fr .75fr; gap: 14px; margin-top: 16px; }
-    .source-card { padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: rgba(17,26,42,.88); }
+    .source-card { padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(145deg, rgba(22,34,56,.92), rgba(13,20,34,.9)); box-shadow: 0 18px 55px rgba(0,0,0,.16); }
     .source-card h3 { margin: 0 0 6px; font-size: 16px; }
     .source-card p { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
     .source-actions { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -65,10 +67,19 @@
     .library-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
     .library-toolbar input { flex: 1 1 240px; min-width: 180px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); padding: 10px 11px; font: inherit; }
     .library-toolbar label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); padding: 0 8px; font-size: 13px; }
-    .bridge-library { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-    .bridge-game { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: rgba(7,11,19,.5); }
-    .bridge-game span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .bridge-game small { color: var(--muted); }
+    .bridge-library { display: grid; grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)); gap: 14px; margin-top: 16px; }
+    .bridge-game { display: flex; flex-direction: column; align-items: stretch; gap: 10px; min-height: 258px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(155deg, rgba(22,34,56,.96), rgba(8,13,23,.96)); box-shadow: 0 12px 32px rgba(0,0,0,.2); transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+    .bridge-game:hover, .bridge-game:focus-within { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 18px 42px rgba(0,0,0,.34); }
+    .game-cover { position: relative; display: grid; place-items: end start; min-height: 132px; overflow: hidden; padding: 13px; border-radius: 10px; background: radial-gradient(circle at 75% 18%, rgba(155,123,255,.85), transparent 28%), linear-gradient(135deg, #153e67, #182348 55%, #42256d); }
+    .game-cover::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, rgba(3,7,15,.72)); }
+    .game-cover strong, .game-cover span { position: relative; z-index: 1; }
+    .game-cover strong { font-size: 42px; line-height: 1; color: rgba(255,255,255,.9); }
+    .game-cover span { position: absolute; top: 10px; right: 10px; color: rgba(255,255,255,.75); font-size: 10px; font-weight: 900; letter-spacing: .12em; }
+    .game-info { min-width: 0; flex: 1; }
+    .game-info strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .game-info small { display: block; overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+    .game-actions { display: flex; gap: 8px; }
+    .game-actions button:last-child { flex: 1; }
     .favorite { min-width: 38px; padding: 7px 9px; color: #ffd36a; }
     @media (max-width: 760px) { .bridge-grid { grid-template-columns: 1fr; } }
     .notes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
@@ -86,7 +97,8 @@
   <main>
     <section class="intro">
       <div>
-        <h2>Emulador PS2 no navegador</h2>
+        <span class="eyebrow">LOCAL GAME STATION · PS2</span>
+        <h2>Seu acervo. Seu PC. Seu controle.</h2>
         <p>O emulador experimental Play!.js roda no navegador usando WebAssembly. Escolha uma imagem de jogo autorizada no botão abaixo — o arquivo permanece no seu navegador.</p>
       </div>
       <div class="actions">
@@ -267,7 +279,7 @@
         const matchesSearch = !query || `${game.name} ${game.path}`.toLowerCase().includes(query);
         return matchesSearch && (!onlyFavorites || favoritePaths.has(game.path));
       }).sort((a, b) => Number(favoritePaths.has(b.game.path)) - Number(favoritePaths.has(a.game.path)) || Number(b.game.last_played || 0) - Number(a.game.last_played || 0) || a.game.name.localeCompare(b.game.name));
-      bridgeLibrary.innerHTML = visible.length ? visible.map(({ game, index }) => `<div class="bridge-game"><button class="favorite" title="${favoritePaths.has(game.path) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}" data-favorite-index="${index}">${favoritePaths.has(game.path) ? '★' : '☆'}</button><span title="${escapeHTML(game.path)}"><strong>${escapeHTML(game.name)}</strong> <small>${escapeHTML(game.path)}</small></span><button data-play-index="${index}">Abrir</button></div>`).join('') : `<div class="status">${games.length ? 'Nenhum jogo corresponde ao filtro.' : 'Nenhum jogo cadastrado. Escaneie uma pasta ou informe uma ISO.'}</div>`;
+      bridgeLibrary.innerHTML = visible.length ? visible.map(({ game, index }) => { const initial = escapeHTML((game.name || 'J').trim().charAt(0).toUpperCase()); return `<article class="bridge-game"><div class="game-cover"><span>PCSX2</span><strong>${initial}</strong></div><div class="game-info" title="${escapeHTML(game.path)}"><strong>${escapeHTML(game.name)}</strong><small>${escapeHTML(game.path)}</small></div><div class="game-actions"><button class="favorite" title="${favoritePaths.has(game.path) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}" data-favorite-index="${index}">${favoritePaths.has(game.path) ? '★' : '☆'}</button><button class="primary" data-play-index="${index}">Jogar agora</button></div></article>`; }).join('') : `<div class="status">${games.length ? 'Nenhum jogo corresponde ao filtro.' : 'Nenhum jogo cadastrado. Escaneie uma pasta ou informe uma ISO.'}</div>`;
       bridgeLibrary.querySelectorAll('[data-favorite-index]').forEach(button => button.addEventListener('click', () => {
         const game = bridgeGames[Number(button.dataset.favoriteIndex)];
         if (favoritePaths.has(game.path)) favoritePaths.delete(game.path); else favoritePaths.add(game.path);
