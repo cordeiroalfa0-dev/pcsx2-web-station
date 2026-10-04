@@ -39,6 +39,11 @@
     .emulator-bar { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #2b303a; background:#151920; color:var(--muted); font-size:12px; }
     .emulator-bar strong { color:var(--text); font-size:14px; }
     .dot { display:inline-block; width:8px; height:8px; margin-right:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 12px var(--accent); }
+    .load-status { display:inline-flex; align-items:center; gap:7px; color:var(--muted); font-size:12px; }
+    .load-status.loading::before { content:""; width:8px; height:8px; border:2px solid #566071; border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+    .load-status.ready { color:var(--accent); }
+    .load-status.error { color:#ff9d9d; }
+    @keyframes spin { to { transform:rotate(360deg); } }
     .canvas-wrap { display:grid; place-items:center; min-height:min(64vh,680px); padding:clamp(12px,3vw,32px); background:radial-gradient(ellipse at center,#252c3c 0,#0b0d12 56%,#050609 100%); }
     #outputCanvas { display:block; width:min(100%,960px); height:auto; aspect-ratio:4/3; background:#000; border:1px solid #424a58; border-radius:5px; box-shadow:0 10px 36px rgba(0,0,0,.38); }
     .dropzone { margin:16px 18px 0; padding:14px 16px; border:1px dashed #4b5669; border-radius:8px; color:var(--muted); text-align:center; font-size:13px; transition:.2s ease; }
@@ -91,7 +96,7 @@
       </div>
     </section>
     <section class="emulator" id="emulator" aria-label="Emulador PlayStation 2">
-      <div class="emulator-bar"><span><span class="dot"></span><strong>Play!.js</strong> · pronto para jogar</span><span>Web local</span></div>
+      <div class="emulator-bar"><span><span class="dot"></span><strong>Play!.js</strong> · pronto para jogar</span><span class="load-status loading" id="loadStatus" role="status" aria-live="polite">Inicializando o emulador…</span></div>
       <div class="canvas-wrap"><canvas id="outputCanvas" width="640" height="480" tabindex="-1"></canvas></div>
       <div class="dropzone" id="dropzone">Escolha sua ISO no botão acima ou arraste o arquivo para cá</div>
       <input class="visually-hidden" id="isoPicker" type="file" accept=".iso,.chd,.cso,.isz,.bin,.elf" aria-label="Escolher imagem de jogo">
@@ -120,6 +125,17 @@
     document.addEventListener('fullscreenchange', () => { fullscreenButton.textContent = document.fullscreenElement ? 'Sair da tela cheia' : 'Tela cheia'; });
     document.getElementById('outputCanvas').addEventListener('click', () => document.getElementById('outputCanvas').focus());
     let pendingFile = null;
+    let loadStatusTimer = null;
+    const loadStatus = document.getElementById('loadStatus');
+    function setLoadStatus(message, state = 'loading') {
+      loadStatus.textContent = message;
+      loadStatus.className = 'load-status ' + state;
+    }
+    function showIsoProgress(fileName) {
+      clearTimeout(loadStatusTimer);
+      setLoadStatus('Abrindo ' + fileName + '…', 'loading');
+      loadStatusTimer = setTimeout(() => setLoadStatus('ISO enviada ao núcleo · inicializando o jogo…', 'loading'), 4500);
+    }
     const isoPicker = document.getElementById('isoPicker');
     document.getElementById('chooseIso').addEventListener('click', () => isoPicker.click());
     isoPicker.addEventListener('change', () => {
@@ -129,9 +145,10 @@
     function loadDroppedFile(file) {
       if (!file || !SUPPORTED.test(file.name)) { dropzone.textContent = 'Formato não suportado. Use ISO, CHD, CSO, ISZ, BIN ou ELF.'; dropzone.classList.remove('active'); return; }
       const input = document.querySelector('#root input[type=file]');
-      if (!input) { pendingFile = file; dropzone.textContent = 'Arquivo selecionado. Aguardando o emulador terminar de carregar…'; return; }
+      if (!input) { pendingFile = file; dropzone.textContent = 'Arquivo selecionado. Aguardando o emulador terminar de carregar…'; showIsoProgress(file.name); return; }
       const transfer = new DataTransfer(); transfer.items.add(file); input.files = transfer.files; input.dispatchEvent(new Event('change', { bubbles:true }));
       pendingFile = null;
+      showIsoProgress(file.name);
       dropzone.textContent = 'Carregando ' + file.name + '…'; dropzone.classList.remove('active');
     }
     ['dragenter','dragover'].forEach(type => dropzone.addEventListener(type, event => { event.preventDefault(); dropzone.classList.add('active'); }));
@@ -141,6 +158,7 @@
       const input = document.querySelector('#root input[type=file]');
       if (input && !input.dataset.enhanced) {
         input.dataset.enhanced = '1'; input.accept = '.iso,.chd,.cso,.isz,.bin,.elf'; input.setAttribute('aria-label', 'Escolher imagem de jogo');
+        setLoadStatus('Emulador pronto · escolha uma ISO', 'ready');
         dropzone.textContent = 'Pronto. Escolha um arquivo ou arraste-o para cá.'; dropzone.classList.add('active'); setTimeout(() => dropzone.classList.remove('active'), 800);
         if (pendingFile) loadDroppedFile(pendingFile);
       }
