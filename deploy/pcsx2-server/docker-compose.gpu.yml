@@ -1,6 +1,0 @@
-services:
-  pcsx2:
-    devices:
-      - /dev/dri:/dev/dri
-    environment:
-      - AUTO_GPU=true

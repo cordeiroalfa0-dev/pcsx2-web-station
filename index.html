@@ -3,363 +3,122 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PCSX2 Web Station — Emulador PS2 no navegador</title>
-  <meta name="description" content="Emulador PlayStation 2 experimental no navegador usando Play!.js e WebAssembly.">
+  <title>Play! Web Station — Emulador PS2 no navegador</title>
+  <meta name="description" content="Emulador PlayStation 2 experimental no navegador. Escolha sua ISO e jogue sem instalar outro programa.">
   <link rel="manifest" href="/manifest.webmanifest">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
-    :root { color-scheme: dark; --bg:#08090d; --surface:#101218; --surface-2:#171a22; --surface-3:#1d212c; --line:#2b303d; --text:#f5f3ef; --muted:#969aa8; --accent:#d7ff43; --accent-ink:#151a08; --violet:#8c7bff; --danger:#ff8c8c; }
+    :root { color-scheme: dark; --bg:#08090d; --panel:#11141b; --panel-2:#191d26; --line:#303744; --text:#f5f3ef; --muted:#9da3b0; --accent:#d7ff43; --accent-ink:#111607; }
     * { box-sizing:border-box; }
     html { scroll-behavior:smooth; scrollbar-width:none; }
     html::-webkit-scrollbar { display:none; }
-    body { margin:0; min-height:100vh; background:radial-gradient(circle at 76% -8%, rgba(140,123,255,.20), transparent 31%), radial-gradient(circle at 15% 10%, rgba(215,255,67,.08), transparent 27%), var(--bg); color:var(--text); font:15px/1.55 'Space Grotesk', system-ui, sans-serif; }
-    body::before { content:''; position:fixed; inset:0; pointer-events:none; opacity:.18; background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px); background-size:48px 48px; mask-image:linear-gradient(to bottom, black, transparent 70%); }
-    header { position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; gap:28px; padding:16px clamp(20px,5vw,72px); border-bottom:1px solid rgba(255,255,255,.08); background:rgba(8,9,13,.78); backdrop-filter:blur(22px); }
-    .site-nav { display:flex; align-items:center; gap:6px; margin-left:auto; }
-    .site-nav a { padding:7px 10px; border:1px solid transparent; border-radius:7px; color:var(--muted); text-decoration:none; font:11px 'DM Mono',monospace; transition:.18s ease; }
-    .site-nav a:hover, .site-nav a:focus-visible { border-color:var(--line); color:var(--accent); background:var(--surface-2); outline:none; }
-    .brand { display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text); }
-    .brand-mark { display:grid; place-items:center; width:34px; height:34px; border-radius:10px; background:var(--accent); color:var(--accent-ink); font-weight:700; font-size:15px; box-shadow:0 0 24px rgba(215,255,67,.22); }
+    body { margin:0; min-height:100vh; color:var(--text); background:radial-gradient(circle at 80% 0,rgba(116,94,255,.18),transparent 32%),radial-gradient(circle at 12% 8%,rgba(215,255,67,.08),transparent 28%),var(--bg); font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    body::before { content:""; position:fixed; inset:0; pointer-events:none; opacity:.16; background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px); background-size:48px 48px; mask-image:linear-gradient(#000,transparent 75%); }
+    header { position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:14px clamp(18px,5vw,72px); border-bottom:1px solid rgba(255,255,255,.09); background:rgba(8,9,13,.82); backdrop-filter:blur(20px); }
+    .brand { display:flex; align-items:center; gap:11px; color:var(--text); text-decoration:none; }
+    .mark { display:grid; place-items:center; width:34px; height:34px; border-radius:10px; background:var(--accent); color:var(--accent-ink); font-weight:800; box-shadow:0 0 22px rgba(215,255,67,.22); }
     h1 { margin:0; font-size:15px; letter-spacing:-.02em; }
-    .header-meta { display:flex; align-items:center; gap:18px; color:var(--muted); font:11px 'DM Mono',monospace; text-transform:uppercase; letter-spacing:.08em; }
-    .badge { padding:6px 9px; border:1px solid rgba(215,255,67,.35); border-radius:999px; color:var(--accent); font:10px 'DM Mono',monospace; letter-spacing:.1em; }
-    main { position:relative; width:min(1240px,calc(100% - 36px)); margin:0 auto 80px; }
-    section { scroll-margin-top:96px; }
-    .intro { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(260px,.65fr); align-items:end; gap:44px; padding:clamp(54px,9vw,112px) 0 42px; }
-    .eyebrow { display:flex; align-items:center; gap:10px; margin-bottom:20px; color:var(--accent); font:11px 'DM Mono',monospace; text-transform:uppercase; letter-spacing:.12em; }
-    .eyebrow::before { content:''; width:28px; height:1px; background:var(--accent); }
-    .intro h2 { max-width:720px; margin:0; font-size:clamp(42px,7vw,86px); line-height:.94; letter-spacing:-.075em; font-weight:600; }
-    .intro h2 em { color:var(--accent); font-style:normal; }
-    .intro p { max-width:570px; margin:24px 0 0; color:var(--muted); font-size:16px; }
-    .hero-side { padding:20px 0 4px; border-top:1px solid var(--line); }
-    .hero-side strong { display:block; margin-bottom:8px; font-size:18px; }
-    .hero-side span { color:var(--muted); font-size:13px; }
-    .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:26px; }
-    button, a.button { border:1px solid var(--line); border-radius:8px; background:var(--surface-2); color:var(--text); padding:11px 15px; text-decoration:none; cursor:pointer; font:500 13px 'Space Grotesk',sans-serif; transition:transform .18s ease,border-color .18s ease,background .18s ease; }
-    button:hover, a.button:hover { transform:translateY(-2px); border-color:var(--accent); background:var(--surface-3); }
-    button:focus-visible, a.button:focus-visible, input:focus-visible, select:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
-    .primary { background:var(--accent)!important; color:var(--accent-ink)!important; border-color:var(--accent)!important; font-weight:700; }
-    .emulator { overflow:hidden; border:1px solid #343947; border-radius:16px; background:#050609; box-shadow:0 28px 90px rgba(0,0,0,.42); }
-    .emulator-bar { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 18px; border-bottom:1px solid #292d38; background:#14171f; color:var(--muted); font:12px 'DM Mono',monospace; }
-    #gpuBadge { display:none; }
-    .emulator-bar strong { color:var(--text); font-family:'Space Grotesk',sans-serif; font-size:14px; }
+    .header-note { color:var(--muted); font-size:12px; }
+    main { width:min(1120px,calc(100% - 32px)); margin:auto; }
+    .hero { display:grid; grid-template-columns:1.3fr .7fr; gap:40px; align-items:end; padding:clamp(52px,9vw,108px) 0 38px; }
+    .eyebrow { display:block; margin-bottom:18px; color:var(--accent); font:11px ui-monospace,SFMono-Regular,monospace; letter-spacing:.12em; text-transform:uppercase; }
+    h2 { max-width:720px; margin:0; font-size:clamp(43px,7vw,82px); line-height:.94; letter-spacing:-.075em; font-weight:650; }
+    h2 em { color:var(--accent); font-style:normal; }
+    .hero p { max-width:570px; margin:22px 0 0; color:var(--muted); font-size:16px; }
+    .hero-card { padding:20px 0 4px; border-top:1px solid var(--line); }
+    .hero-card strong { display:block; margin-bottom:7px; font-size:18px; }
+    .hero-card span { color:var(--muted); font-size:13px; }
+    .actions { display:flex; flex-wrap:wrap; gap:9px; margin-top:22px; }
+    button,a.button { border:1px solid var(--line); border-radius:8px; background:var(--panel-2); color:var(--text); padding:11px 15px; cursor:pointer; font:600 13px system-ui,sans-serif; text-decoration:none; transition:.18s ease; }
+    button:hover,a.button:hover { transform:translateY(-2px); border-color:var(--accent); }
+    button:focus-visible,a.button:focus-visible,input:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+    .primary { border-color:var(--accent)!important; background:var(--accent)!important; color:var(--accent-ink)!important; }
+    .emulator { overflow:hidden; border:1px solid #3a414f; border-radius:16px; background:#050609; box-shadow:0 28px 90px rgba(0,0,0,.42); }
+    .emulator-bar { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #2b303a; background:#151920; color:var(--muted); font-size:12px; }
+    .emulator-bar strong { color:var(--text); font-size:14px; }
     .dot { display:inline-block; width:8px; height:8px; margin-right:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 12px var(--accent); }
-    .canvas-wrap { display:grid; place-items:center; min-height:min(64vh,700px); padding:clamp(12px,3vw,32px); background:radial-gradient(ellipse at center, #242a39 0%, #0b0d12 56%, #050609 100%); }
-    #outputCanvas { display:block; width:min(100%,960px); height:auto; aspect-ratio:4/3; background:#000; border:1px solid #404756; border-radius:5px; image-rendering:auto; box-shadow:0 10px 36px rgba(0,0,0,.38); }
-    #root { display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; padding:15px 18px; min-height:66px; background:#14171f; color:var(--muted); }
+    .canvas-wrap { display:grid; place-items:center; min-height:min(64vh,680px); padding:clamp(12px,3vw,32px); background:radial-gradient(ellipse at center,#252c3c 0,#0b0d12 56%,#050609 100%); }
+    #outputCanvas { display:block; width:min(100%,960px); height:auto; aspect-ratio:4/3; background:#000; border:1px solid #424a58; border-radius:5px; box-shadow:0 10px 36px rgba(0,0,0,.38); }
+    .dropzone { margin:16px 18px 0; padding:14px 16px; border:1px dashed #4b5669; border-radius:8px; color:var(--muted); text-align:center; font-size:13px; transition:.2s ease; }
+    .dropzone.active { border-color:var(--accent); background:rgba(215,255,67,.08); color:var(--text); }
+    #root { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:14px; min-height:66px; padding:15px 18px; background:#151920; color:var(--muted); }
     #root input[type=file] { max-width:100%; color:var(--muted); }
     #root input[type=file]::file-selector-button { margin-right:10px; border:0; border-radius:6px; padding:9px 12px; background:var(--accent); color:var(--accent-ink); font-weight:700; cursor:pointer; }
-    #root .stats { color:var(--accent); font-variant-numeric:tabular-nums; } #root .version { color:#697080; font-size:12px; }
-    .dropzone { margin:16px 18px 0; padding:13px 16px; border:1px dashed #465064; border-radius:8px; color:var(--muted); text-align:center; transition:.2s ease; font-size:13px; }
-    .dropzone.active { border-color:var(--accent); background:rgba(215,255,67,.08); color:var(--text); }
-    .section-kicker { display:block; margin:46px 0 12px; color:var(--accent); font:10px 'DM Mono',monospace; text-transform:uppercase; letter-spacing:.13em; }
-    .performance-card, .bridge-card, .remote-card, .source-card, .note { border:1px solid var(--line); border-radius:14px; background:rgba(16,18,24,.86); box-shadow:0 14px 45px rgba(0,0,0,.16); }
-    .performance-card { display:none; margin-top:18px; padding:24px; }
-    .performance-card h3, .remote-card h3, .bridge-card h3, .source-card h3 { margin:0 0 7px; font-size:18px; letter-spacing:-.03em; }
-    .performance-help, .bridge-help, .source-card p { margin:0 0 15px; color:var(--muted); font-size:13px; }
-    .performance-grid { display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:9px; align-items:end; margin-top:15px; }
-    .performance-grid label, .remote-grid label, .bridge-grid label { display:grid; gap:6px; color:var(--muted); font:11px 'DM Mono',monospace; text-transform:uppercase; letter-spacing:.03em; }
-    select, input { width:100%; border:1px solid var(--line); border-radius:8px; background:#0b0d12; color:var(--text); padding:11px 12px; font:13px 'Space Grotesk',sans-serif; }
-    .gpu-badge { display:inline-flex; align-items:center; gap:7px; min-height:42px; padding:9px 11px; border:1px solid var(--line); border-radius:8px; background:#0b0d12; color:var(--muted); font-size:12px; }
-    .gpu-badge.ok { color:var(--accent); border-color:#556b2d; } .gpu-badge.warn { color:#ffd38a; border-color:#76582a; }
-    .performance-checks { display:flex; flex-wrap:wrap; gap:8px 18px; margin:14px 0 0; padding:0; list-style:none; color:var(--muted); font-size:12px; }
-    .performance-checks .ok, .status.ok { color:var(--accent); } .performance-checks .warn, .status.error { color:var(--danger); }
-    .remote-card { margin-top:18px; padding:24px; border-color:#4d4382; background:radial-gradient(circle at 100% 0,rgba(140,123,255,.18),transparent 35%),rgba(18,17,29,.9); }
-    .remote-grid { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:end; }
-    .source-panel { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:18px; }
-    .source-card { padding:22px; }
-    .source-card strong { color:var(--text); }
-    .source-actions { display:flex; flex-wrap:wrap; gap:8px; }
-    .bridge-card { margin-top:18px; padding:24px; border-color:#3b4c37; background:linear-gradient(135deg,rgba(17,27,19,.94),rgba(14,17,22,.94)); }
-    .bridge-grid { display:grid; grid-template-columns:1.1fr 1.6fr auto; gap:9px; align-items:end; }
-    .library-toolbar { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; padding-top:18px; border-top:1px solid var(--line); }
-    .library-toolbar input { flex:1 1 240px; min-width:180px; } .library-toolbar label { display:inline-flex; align-items:center; gap:6px; color:var(--muted); padding:0 8px; font-size:13px; }
-    .bridge-library { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:13px; margin-top:14px; }
-    .bridge-game { display:flex; flex-direction:column; gap:10px; min-height:250px; padding:11px; border:1px solid var(--line); border-radius:12px; background:linear-gradient(155deg,#191d27,#0a0c11); transition:.18s ease; }
-    .bridge-game:hover, .bridge-game:focus-within { transform:translateY(-3px); border-color:var(--accent); box-shadow:0 18px 38px rgba(0,0,0,.28); }
-    .game-cover { position:relative; display:grid; place-items:end start; min-height:132px; overflow:hidden; padding:13px; border-radius:8px; background:radial-gradient(circle at 75% 18%,rgba(140,123,255,.82),transparent 28%),linear-gradient(135deg,#2d4b37,#272449 55%,#4b2d62); }
-    .game-cover::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg,transparent 30%,rgba(3,7,15,.72)); } .game-cover strong,.game-cover span { position:relative; z-index:1; }
-    .game-cover strong { font-size:42px; line-height:1; color:rgba(255,255,255,.9); } .game-cover span { position:absolute; top:10px; right:10px; color:rgba(255,255,255,.75); font:10px 'DM Mono',monospace; }
-    .game-info { min-width:0; flex:1; } .game-info strong,.game-info small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .game-info small { color:var(--muted); }
-    .game-actions { display:flex; gap:8px; } .game-actions button:last-child { flex:1; } .favorite { min-width:38px; padding:7px 9px; color:#ffd36a; }
-    .notes { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:18px; } .note { padding:17px; color:var(--muted); font-size:13px; } .note strong { display:block; color:var(--text); margin-bottom:5px; }
-    .status { min-height:20px; color:var(--muted); font-size:12px; } code { color:var(--accent); }
-    body.performance-mode .canvas-wrap { background:#000; } body.performance-mode #outputCanvas { image-rendering:pixelated; border-color:#596b55; } body.performance-mode .emulator,body.performance-mode .source-card,body.performance-mode .performance-card { box-shadow:none; }
-    @media (max-width:900px) { .intro{grid-template-columns:1fr}.performance-grid{grid-template-columns:1fr 1fr}.hero-side{max-width:440px} }
-    @media (max-width:760px) { header{padding:12px 18px; gap:10px; overflow-x:auto; flex-wrap:wrap}.site-nav{order:3; flex:1 0 100%; justify-content:center; border-top:1px solid rgba(255,255,255,.07); padding-top:8px}.header-meta{gap:9px}.header-meta span:not(.badge){display:none}.source-panel,.notes{grid-template-columns:1fr}.bridge-grid{grid-template-columns:1fr}.canvas-wrap{min-height:520px} }
-    @media (max-width:520px) { main{width:min(100% - 24px,1240px)}.intro{padding-top:52px}.intro h2{font-size:clamp(42px,14vw,68px)}.performance-grid{grid-template-columns:1fr}.performance-card,.remote-card,.bridge-card,.source-card{padding:18px}.emulator-bar{align-items:flex-start;flex-direction:column}.header-meta{font-size:9px} }
+    #root .stats { color:var(--accent); font-variant-numeric:tabular-nums; }
+    #root .version { color:#707888; font-size:12px; }
+    .help-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:18px 0 64px; }
+    .help-card { padding:18px; border:1px solid var(--line); border-radius:12px; background:rgba(17,20,27,.88); color:var(--muted); font-size:13px; }
+    .help-card strong { display:block; margin-bottom:5px; color:var(--text); font-size:14px; }
+    footer { padding:20px 0 50px; color:#7d8491; text-align:center; font-size:12px; }
+    footer a { color:var(--accent); }
+    @media (max-width:800px) { .hero{grid-template-columns:1fr}.hero-card{max-width:450px}.help-grid{grid-template-columns:1fr 1fr} }
+    @media (max-width:520px) { header{padding:12px 16px}.header-note{display:none}main{width:calc(100% - 24px)}.hero{padding-top:52px}.hero h2{font-size:clamp(43px,14vw,68px)}.emulator-bar{align-items:flex-start;flex-direction:column;gap:5px}.canvas-wrap{min-height:470px}.help-grid{grid-template-columns:1fr}.help-card{padding:16px} }
   </style>
 </head>
 <body>
   <header>
-    <a class="brand" href="/" aria-label="PCSX2 Web Station — início"><span class="brand-mark">P2</span><h1>PCSX2 Web Station</h1></a>
-    <nav class="site-nav" aria-label="Atalhos da página"><a href="#emulator">Jogar</a><a href="#remote">Servidor</a><a href="#bridge">PC local</a><a href="#more">Mais</a></nav><div class="header-meta"><span>LOCAL GAME STATION</span><span class="badge">WEBASSEMBLY</span></div>
+    <a class="brand" href="/" aria-label="Play! Web Station — início"><span class="mark">P!</span><h1>Play! Web Station</h1></a>
+    <span class="header-note">Emulador PS2 no navegador</span>
   </header>
   <main>
-    <section class="intro">
+    <section class="hero">
       <div>
-        <span class="eyebrow">LOCAL GAME STATION · PS2</span>
-        <h2>Jogue no seu ritmo.<br><em>Sem complicação.</em></h2>
-        <p>Abra um jogo autorizado direto no navegador. Seus arquivos continuam no seu dispositivo e você pode começar em poucos cliques.</p>
+        <span class="eyebrow">PLAYSTATION 2 · WEB</span>
+        <h2>Escolha sua ISO.<br><em>Comece a jogar.</em></h2>
+        <p>Você só precisa do arquivo do jogo. Selecione uma ISO no seu computador e tente rodar direto no navegador — sem instalação adicional.</p>
       </div>
-      <div class="hero-side">
-        <strong>Uma estação PS2 direto no navegador.</strong>
-        <span>Seus arquivos ficam com você · pronto para começar</span>
+      <div class="hero-card">
+        <strong>Seus arquivos ficam com você.</strong>
+        <span>Nada é enviado para o site. Use apenas jogos que você possui ou tem autorização para usar.</span>
         <div class="actions">
-        <button class="primary" id="chooseIso">Escolher ISO</button>
-        <button id="fullscreen">Tela cheia</button>
-        <button id="install" hidden>Instalar app</button>
-        <a class="button" href="https://github.com/jpd002/Play-" target="_blank" rel="noopener">Código-fonte</a>
+          <button class="primary" id="chooseIso">Escolher ISO</button>
+          <button id="fullscreen">Tela cheia</button>
         </div>
       </div>
     </section>
     <section class="emulator" id="emulator" aria-label="Emulador PlayStation 2">
-      <div class="emulator-bar"><span><span class="dot"></span><strong>Play!.js</strong> · pronto para jogar</span><span id="gpuBadge">Verificando GPU…</span></div>
+      <div class="emulator-bar"><span><span class="dot"></span><strong>Play!.js</strong> · pronto para jogar</span><span>Web local</span></div>
       <div class="canvas-wrap"><canvas id="outputCanvas" width="640" height="480" tabindex="-1"></canvas></div>
       <div class="dropzone" id="dropzone">Escolha sua ISO no botão acima ou arraste o arquivo para cá</div>
-      <div id="root" aria-live="polite">Carregando o núcleo do emulador…</div>
+      <div id="root" aria-live="polite">Carregando o emulador…</div>
     </section>
-    <section class="performance-card" aria-label="Assistente de desempenho gráfico">
-      <h3 style="margin:0 0 6px;">Assistente de desempenho</h3>
-      <p class="performance-help">A web pode escolher renderização acelerada, reduzir efeitos da interface, manter o PC acordado e usar tela cheia. Ela não cria uma placa de vídeo: se o navegador estiver usando renderização por software, use o PCSX2 desktop pelo Bridge.</p>
-      <div class="performance-grid" style="margin-top:12px;">
-        <div class="gpu-badge" id="gpuStatus">Analisando WebGL/WebGPU…</div>
-        <label>Perfil
-          <select id="performanceMode"><option value="balanced">Equilibrado</option><option value="performance">Desempenho (menos efeitos)</option><option value="quality">Qualidade (imagem suave)</option></select>
-        </label>
-        <button id="performanceFullscreen">Tela cheia para jogar</button>
-        <button id="keepAwake">Manter tela acordada</button>
-      </div>
-      <ul class="performance-checks" id="performanceChecks" aria-live="polite"></ul>
-      <div class="status" id="gamepadStatus" aria-live="polite">Gamepad: procurando controle…</div>
-    </section>
-    <section class="remote-card" id="remote" aria-label="PCSX2 hospedado no servidor">
-      <h3 style="margin:0 0 6px;">PCSX2 na web · servidor remoto</h3>
-      <p class="bridge-help">O PCSX2 roda no servidor e esta página abre a sessão gráfica no navegador. O seu computador não precisa instalar o emulador.</p>
-      <div class="remote-grid">
-        <label>URL HTTPS da sessão PCSX2
-          <input id="remotePcsx2Url" placeholder="https://seu-servidor:3001" spellcheck="false" autocomplete="url">
-        </label>
-        <button class="primary" id="openRemotePcsx2">Abrir sessão remota</button>
-      </div>
-      <div class="status" id="remotePcsx2Status" aria-live="polite">Configure a URL do servidor para jogar pelo navegador.</div>
-    </section>
-    <section class="source-panel" id="more" aria-label="Fontes de jogos">
-      <div class="source-card">
-        <h3>Google Drive · pasta pública</h3>
-        <p>A pasta <strong>isogames</strong> está configurada como atalho. A listagem automática exige uma chave da API do Google; por enquanto, abra a pasta e escolha/baixe o arquivo autorizado.</p>
-        <div class="source-actions">
-          <a class="button primary" href="https://drive.google.com/drive/folders/1e2rVm42_iBETPZb9gRKEWMMejlFe9Fns?usp=drive_link" target="_blank" rel="noopener">Abrir pasta isogames</a>
-          <button id="copyDrive">Copiar link</button>
-        </div>
-        <div class="status" id="driveStatus" aria-live="polite"></div>
-      </div>
-      <div class="source-card">
-        <h3>Open source e privacidade</h3>
-        <p>O núcleo Play! é open source e foi compilado para WebAssembly. O arquivo escolhido permanece no navegador. Não envie BIOS ou jogos que você não tenha autorização para usar.</p>
-        <div class="source-actions"><a class="button" href="https://github.com/jpd002/Play-" target="_blank" rel="noopener">Ver código open source</a><a class="button" href="/third_party/play/LICENSE.txt" target="_blank" rel="noopener">Ver licença</a><a class="button" href="/third_party/play/SOURCE-VERIFICATION.md" target="_blank" rel="noopener">Verificação</a></div>
-        <div class="status ok">✓ Nenhum upload automático</div>
-      </div>
-    </section>
-    <section class="bridge-card" id="bridge" aria-label="Conexão com o PCSX2 local">
-      <h3 style="margin:0 0 6px;">Opcional: PCSX2 instalado no PC</h3>
-      <p class="bridge-help">Se você tem apenas as ISOs, ignore esta seção e use <strong>Escolher ISO</strong> no quadro acima — não precisa instalar o PCSX2. Esta área só serve para quem já tem o PCSX2 e o Bridge instalados.</p>
-      <div class="bridge-grid">
-        <label>URL do Bridge
-          <input id="bridgeUrl" value="http://127.0.0.1:8765" spellcheck="false" autocomplete="off">
-        </label>
-        <label>Caminho completo da ISO no PC
-          <input id="isoPath" placeholder="Windows: C:\\Jogos\\meu-jogo.iso · Linux: /home/voce/Jogos/meu-jogo.iso" spellcheck="false" autocomplete="off">
-        </label>
-        <button id="bridgeTest">Testar conexão</button>
-      </div>
-      <div class="source-actions" style="margin-top:10px;">
-        <button class="primary" id="openIso">Abrir ISO no PCSX2</button>
-        <button id="scanGames">Escanear pasta</button>
-        <label class="button" style="cursor:pointer;">Selecionar pasta para escanear <input id="scanPath" type="text" placeholder="Caminho da pasta no PC" style="width:220px;border:0;background:transparent;color:var(--text);outline:0;"></label>
-      </div>
-      <div class="status" id="bridgeStatus" aria-live="polite"></div>
-      <div class="library-toolbar" aria-label="Pesquisar biblioteca local">
-        <input id="librarySearch" type="search" placeholder="Pesquisar jogo ou caminho…" autocomplete="off">
-        <label><input id="favoritesOnly" type="checkbox"> Somente favoritos</label>
-      </div>
-      <div class="bridge-library" id="bridgeLibrary" aria-live="polite"></div>
-    </section>
-    <section class="source-card" style="margin-top: 14px;" aria-label="Compatibilidade dos jogos">
-      <h3>Compatibilidade oficial</h3>
-      <p>Consulte o rastreador oficial do Play! antes de tentar um jogo. A busca abre somente resultados do GitHub do projeto.</p>
-      <div class="source-actions">
-        <input id="compatibilityGame" type="search" placeholder="Nome do jogo, por exemplo God of War" style="flex:1;min-width:220px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--text);padding:10px 12px;">
-        <button class="primary" id="compatibilitySearch">Pesquisar no tracker</button>
-        <a class="button" href="https://github.com/jpd002/Play-Compatibility" target="_blank" rel="noopener">Abrir tracker</a>
-      </div>
-      <div class="status" id="compatibilityStatus" aria-live="polite"></div>
-    </section>
-    <section class="notes">
-      <div class="note"><strong>Como iniciar</strong>Abra o seletor de arquivos dentro do quadro e escolha uma ISO, CSO, CHD, ISZ, BIN ou ELF autorizada.</div>
-      <div class="note"><strong>BIOS</strong>O Play!.js usa uma BIOS HLE integrada e não aceita BIOS externa. Isso é diferente do PCSX2 desktop.</div>
-      <div class="note"><strong>Compatibilidade</strong>É uma versão experimental. Chrome ou Firefox recente e um computador razoável são recomendados.</div>
+    <section class="help-grid" aria-label="Informações rápidas">
+      <div class="help-card"><strong>Formatos aceitos</strong>ISO, CHD, CSO, ISZ, BIN e ELF.</div>
+      <div class="help-card"><strong>Como jogar</strong>Escolha o arquivo, aguarde o carregamento e clique no quadro para capturar o controle.</div>
+      <div class="help-card"><strong>Compatibilidade</strong>Este emulador web é experimental. Alguns jogos podem não funcionar corretamente.</div>
     </section>
   </main>
+  <footer>Play!.js é open source. <a href="https://github.com/jpd002/Play-" target="_blank" rel="noopener">Ver projeto original</a> · <a href="/third_party/play/LICENSE.txt" target="_blank" rel="noopener">Licença</a></footer>
   <script src="/vendor/playjs/main.js"></script>
   <script>
-    const DRIVE_FOLDER = 'https://drive.google.com/drive/folders/1e2rVm42_iBETPZb9gRKEWMMejlFe9Fns?usp=drive_link';
-    const SUPPORTED = /\.(iso|chd|cso|isz|bin|elf)$/i;
     const emulator = document.getElementById('emulator');
-    const gpuBadge = document.getElementById('gpuBadge');
-    const gpuStatus = document.getElementById('gpuStatus');
-    const performanceChecks = document.getElementById('performanceChecks');
-    const performanceMode = document.getElementById('performanceMode');
-    const gamepadStatus = document.getElementById('gamepadStatus');
-    let wakeLock = null;
-    async function enterGameFullscreen() {
-      if (!document.fullscreenElement) { try { await emulator.requestFullscreen?.(); } catch {} }
-    }
-    document.getElementById('fullscreen').addEventListener('click', enterGameFullscreen);
-    document.getElementById('performanceFullscreen').addEventListener('click', enterGameFullscreen);
-    // Browsers require a user gesture; the first interaction enters fullscreen automatically when permitted.
-    let fullscreenAttempted = false;
-    document.addEventListener('pointerdown', () => { if (!fullscreenAttempted) { fullscreenAttempted = true; enterGameFullscreen(); } }, { once: true, passive: true });
-    document.addEventListener('keydown', event => { if (event.key === 'F11') { event.preventDefault(); enterGameFullscreen(); } }, { passive: false });
-    function detectGraphics() {
-      const probe = document.createElement('canvas');
-      const gl = probe.getContext('webgl2', { powerPreference: 'high-performance' }) || probe.getContext('webgl', { powerPreference: 'high-performance' });
-      const webgpu = 'gpu' in navigator;
-      let renderer = '';
-      if (gl) { const info = gl.getExtension('WEBGL_debug_renderer_info'); renderer = info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); }
-      const software = /swiftshader|llvmpipe|softpipe|software rasterizer/i.test(renderer);
-      if (gl && !software) { gpuBadge.textContent = `GPU/WebGL ativo${renderer ? ` · ${renderer}` : ''}`; gpuBadge.className = 'gpu-badge ok'; gpuStatus.textContent = `Aceleração gráfica disponível${webgpu ? ' · WebGPU detectado' : ''}`; gpuStatus.className = 'gpu-badge ok'; }
-      else if (gl) { gpuBadge.textContent = 'WebGL por software'; gpuBadge.className = 'gpu-badge warn'; gpuStatus.textContent = 'Renderização por software: prefira PCSX2 desktop'; gpuStatus.className = 'gpu-badge warn'; }
-      else { gpuBadge.textContent = 'WebGL indisponível'; gpuBadge.className = 'gpu-badge warn'; gpuStatus.textContent = 'WebGL indisponível: atualize o navegador ou ative a aceleração'; gpuStatus.className = 'gpu-badge warn'; }
-      performanceChecks.innerHTML = `<li class="${gl ? 'ok' : 'warn'}">${gl ? '✓' : '⚠'} WebGL ${gl ? 'disponível' : 'não disponível'}</li><li class="${webgpu ? 'ok' : 'warn'}">${webgpu ? '✓ WebGPU detectado' : '• WebGPU opcional não detectado'}</li><li>• Jogo local: sem upload</li>`;
-    }
-    function applyPerformanceMode(value) {
-      document.body.classList.toggle('performance-mode', value === 'performance');
-      document.getElementById('outputCanvas').style.imageRendering = value === 'quality' ? 'auto' : 'pixelated';
-      localStorage.setItem('pcsx2-performance-mode', value);
-    }
-    performanceMode.value = localStorage.getItem('pcsx2-performance-mode') || 'balanced';
-    performanceMode.addEventListener('change', () => applyPerformanceMode(performanceMode.value));
-    applyPerformanceMode(performanceMode.value);
-    async function toggleWakeLock() {
-      const button = document.getElementById('keepAwake');
-      if (!('wakeLock' in navigator)) { button.textContent = 'Wake Lock indisponível'; gamepadStatus.textContent = 'Dica: desative a suspensão automática do sistema durante a partida.'; return; }
-      try { if (wakeLock) { await wakeLock.release(); wakeLock = null; button.textContent = 'Manter tela acordada'; gamepadStatus.textContent = 'Tela acordada desativada.'; } else { wakeLock = await navigator.wakeLock.request('screen'); button.textContent = 'Tela acordada ✓'; gamepadStatus.textContent = 'Tela impedida de suspender durante o jogo.'; } } catch { gamepadStatus.textContent = 'O navegador bloqueou o Wake Lock; mantenha o PC ligado manualmente.'; }
-    }
-    document.getElementById('keepAwake').addEventListener('click', toggleWakeLock);
-    function updateGamepadStatus() {
-      const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : [];
-      gamepadStatus.textContent = pads.length ? `Gamepad conectado: ${pads[0].id}. Clique no quadro do jogo para capturar os controles.` : 'Gamepad: conecte um controle e pressione qualquer botão para detectar.';
-      gamepadStatus.className = pads.length ? 'status ok' : 'status';
-    }
-    window.addEventListener('gamepadconnected', updateGamepadStatus);
-    window.addEventListener('gamepaddisconnected', updateGamepadStatus);
-    detectGraphics(); updateGamepadStatus();
-    const remotePcsx2Url = document.getElementById('remotePcsx2Url');
-    const remotePcsx2Status = document.getElementById('remotePcsx2Status');
-    remotePcsx2Url.value = localStorage.getItem('pcsx2-remote-url') || '';
-    document.getElementById('openRemotePcsx2').addEventListener('click', () => {
-      const value = remotePcsx2Url.value.trim();
-      try { const url = new URL(value); if (!['https:', 'http:'].includes(url.protocol)) throw new Error(); localStorage.setItem('pcsx2-remote-url', value); window.open(url.href, '_blank', 'noopener'); remotePcsx2Status.textContent = 'Sessão PCSX2 remota aberta em uma nova aba.'; remotePcsx2Status.className = 'status ok'; }
-      catch { remotePcsx2Status.textContent = 'Informe uma URL válida, preferencialmente HTTPS, como https://seu-servidor:3001.'; remotePcsx2Status.className = 'status error'; }
-    });
-    document.getElementById('copyDrive').addEventListener('click', async () => {
-      const status = document.getElementById('driveStatus');
-      try { await navigator.clipboard.writeText(DRIVE_FOLDER); status.textContent = 'Link copiado.'; status.className = 'status ok'; }
-      catch { status.textContent = DRIVE_FOLDER; status.className = 'status'; }
-    });
-    document.getElementById('compatibilitySearch').addEventListener('click', () => {
-      const game = document.getElementById('compatibilityGame').value.trim();
-      const status = document.getElementById('compatibilityStatus');
-      if (!game) { status.textContent = 'Digite o nome de um jogo.'; status.className = 'status error'; return; }
-      const query = encodeURIComponent(`${game} in:title`);
-      window.open(`https://github.com/jpd002/Play-Compatibility/issues?q=is%3Aissue+${query}`, '_blank', 'noopener');
-      status.textContent = 'Resultados oficiais abertos em uma nova aba.'; status.className = 'status ok';
-    });
-    document.getElementById('compatibilityGame').addEventListener('keydown', event => { if (event.key === 'Enter') document.getElementById('compatibilitySearch').click(); });
-    let installPrompt;
-    window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); installPrompt = event; document.getElementById('install').hidden = false; });
-    document.getElementById('install').addEventListener('click', async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; document.getElementById('install').hidden = true; });
-    if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
-    const bridgeUrl = document.getElementById('bridgeUrl');
-    const isoPath = document.getElementById('isoPath');
-    const bridgeStatus = document.getElementById('bridgeStatus');
-    const bridgeLibrary = document.getElementById('bridgeLibrary');
-    const bridgeToken = 'pcsx2-token';
-    function setBridgeStatus(message, ok = false) { bridgeStatus.textContent = message; bridgeStatus.className = 'status ' + (ok ? 'ok' : 'error'); }
-    async function bridgeRequest(endpoint, options = {}) {
-      const response = await fetch(bridgeUrl.value.replace(/\/$/, '') + endpoint, { ...options, headers: { 'Content-Type': 'application/json', 'X-Token': bridgeToken, ...(options.headers || {}) } });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.error) throw new Error(data.error || `Bridge respondeu HTTP ${response.status}`);
-      return data;
-    }
-    let bridgeGames = [];
-    let favoritePaths = new Set(JSON.parse(localStorage.getItem('pcsx2-favorite-paths') || '[]'));
-    function escapeHTML(value) { return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character])); }
-    function renderBridgeLibrary(games = bridgeGames) {
-      bridgeGames = games;
-      const query = document.getElementById('librarySearch').value.trim().toLowerCase();
-      const onlyFavorites = document.getElementById('favoritesOnly').checked;
-      const visible = games.map((game, index) => ({ game, index })).filter(({ game }) => {
-        const matchesSearch = !query || `${game.name} ${game.path}`.toLowerCase().includes(query);
-        return matchesSearch && (!onlyFavorites || favoritePaths.has(game.path));
-      }).sort((a, b) => Number(favoritePaths.has(b.game.path)) - Number(favoritePaths.has(a.game.path)) || Number(b.game.last_played || 0) - Number(a.game.last_played || 0) || a.game.name.localeCompare(b.game.name));
-      bridgeLibrary.innerHTML = visible.length ? visible.map(({ game, index }) => { const initial = escapeHTML((game.name || 'J').trim().charAt(0).toUpperCase()); return `<article class="bridge-game"><div class="game-cover"><span>PCSX2</span><strong>${initial}</strong></div><div class="game-info" title="${escapeHTML(game.path)}"><strong>${escapeHTML(game.name)}</strong><small>${escapeHTML(game.path)}</small></div><div class="game-actions"><button class="favorite" title="${favoritePaths.has(game.path) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}" data-favorite-index="${index}">${favoritePaths.has(game.path) ? '★' : '☆'}</button><button class="primary" data-play-index="${index}">Jogar agora</button></div></article>`; }).join('') : `<div class="status">${games.length ? 'Nenhum jogo corresponde ao filtro.' : 'Nenhum jogo cadastrado. Escaneie uma pasta ou informe uma ISO.'}</div>`;
-      bridgeLibrary.querySelectorAll('[data-favorite-index]').forEach(button => button.addEventListener('click', () => {
-        const game = bridgeGames[Number(button.dataset.favoriteIndex)];
-        if (favoritePaths.has(game.path)) favoritePaths.delete(game.path); else favoritePaths.add(game.path);
-        localStorage.setItem('pcsx2-favorite-paths', JSON.stringify([...favoritePaths])); renderBridgeLibrary();
-      }));
-      bridgeLibrary.querySelectorAll('[data-play-index]').forEach(button => button.addEventListener('click', async () => {
-        try { setBridgeStatus('Iniciando PCSX2…'); const result = await bridgeRequest('/api/play', { method: 'POST', body: JSON.stringify({ index: Number(button.dataset.playIndex) }) }); setBridgeStatus(`PCSX2 iniciado com ${result.path}`, true); const state = await bridgeRequest('/api/state'); renderBridgeLibrary(state.games); }
-        catch (error) { setBridgeStatus(error.message); }
-      }));
-    }
-    document.getElementById('librarySearch').addEventListener('input', () => renderBridgeLibrary());
-    document.getElementById('favoritesOnly').addEventListener('change', () => renderBridgeLibrary());
-    document.getElementById('bridgeTest').addEventListener('click', async () => {
-      try { const state = await bridgeRequest('/api/state'); renderBridgeLibrary(state.games); setBridgeStatus(`Conectado. PCSX2 configurado: ${state.exe || 'não detectado'}`, true); }
-      catch (error) { setBridgeStatus('Não conectou ao Bridge. Execute bridge/run-bridge.bat (Windows) ou bridge/run-bridge.sh (Linux/macOS).'); }
-    });
-    document.getElementById('openIso').addEventListener('click', async () => {
-      if (!isoPath.value.trim()) { setBridgeStatus('Informe o caminho completo da ISO no seu PC.'); isoPath.focus(); return; }
-      try { const result = await bridgeRequest('/api/open', { method: 'POST', body: JSON.stringify({ path: isoPath.value.trim() }) }); setBridgeStatus(`ISO aberta no PCSX2: ${result.path}`, true); const state = await bridgeRequest('/api/state'); renderBridgeLibrary(state.games); }
-      catch (error) { setBridgeStatus(error.message); }
-    });
-    document.getElementById('scanGames').addEventListener('click', async () => {
-      if (!document.getElementById('scanPath').value.trim()) { setBridgeStatus('Informe o caminho da pasta que contém suas ISOs.'); return; }
-      try { const result = await bridgeRequest('/api/scan', { method: 'POST', body: JSON.stringify({ path: document.getElementById('scanPath').value.trim() }) }); const state = await bridgeRequest('/api/state'); renderBridgeLibrary(state.games); setBridgeStatus(`${result.added} jogo(s) adicionado(s); ${result.found} arquivo(s) encontrado(s).`, true); }
-      catch (error) { setBridgeStatus(error.message); }
-    });
-
     const dropzone = document.getElementById('dropzone');
+    const SUPPORTED = /\.(iso|chd|cso|isz|bin|elf)$/i;
+    async function enterFullscreen() { if (!document.fullscreenElement) { try { await emulator.requestFullscreen?.(); } catch {} } }
+    document.getElementById('fullscreen').addEventListener('click', enterFullscreen);
     document.getElementById('outputCanvas').addEventListener('click', () => document.getElementById('outputCanvas').focus());
+    document.getElementById('chooseIso').addEventListener('click', () => {
+      const input = document.querySelector('#root input[type=file]');
+      if (input) input.click(); else dropzone.textContent = 'O emulador ainda está carregando; tente novamente em alguns segundos.';
+    });
     function loadDroppedFile(file) {
       if (!file || !SUPPORTED.test(file.name)) { dropzone.textContent = 'Formato não suportado. Use ISO, CHD, CSO, ISZ, BIN ou ELF.'; dropzone.classList.remove('active'); return; }
       const input = document.querySelector('#root input[type=file]');
       if (!input) { dropzone.textContent = 'O emulador ainda está carregando; tente novamente em alguns segundos.'; return; }
-      const transfer = new DataTransfer(); transfer.items.add(file); input.files = transfer.files; input.dispatchEvent(new Event('change', { bubbles: true }));
+      const transfer = new DataTransfer(); transfer.items.add(file); input.files = transfer.files; input.dispatchEvent(new Event('change', { bubbles:true }));
       dropzone.textContent = 'Carregando ' + file.name + '…'; dropzone.classList.remove('active');
     }
-    ['dragenter','dragover'].forEach(type => dropzone.addEventListener(type, e => { e.preventDefault(); dropzone.classList.add('active'); }));
-    ['dragleave','drop'].forEach(type => dropzone.addEventListener(type, e => { e.preventDefault(); if (type === 'dragleave') dropzone.classList.remove('active'); }));
-    dropzone.addEventListener('drop', e => loadDroppedFile(e.dataTransfer.files[0]));
-    document.getElementById('chooseIso').addEventListener('click', () => {
-      const input = document.querySelector('#root input[type=file]');
-      if (input) input.click();
-      else { dropzone.textContent = 'O emulador ainda está carregando; tente novamente em alguns segundos.'; }
-    });
+    ['dragenter','dragover'].forEach(type => dropzone.addEventListener(type, event => { event.preventDefault(); dropzone.classList.add('active'); }));
+    ['dragleave','drop'].forEach(type => dropzone.addEventListener(type, event => { event.preventDefault(); if (type === 'dragleave') dropzone.classList.remove('active'); }));
+    dropzone.addEventListener('drop', event => loadDroppedFile(event.dataTransfer.files[0]));
     const rootObserver = new MutationObserver(() => {
       const input = document.querySelector('#root input[type=file]');
       if (input && !input.dataset.enhanced) {
-        input.dataset.enhanced = '1';
-        input.accept = '.iso,.chd,.cso,.isz,.bin,.elf';
-        input.setAttribute('aria-label', 'Escolher imagem de jogo');
-        dropzone.textContent = 'Pronto. Escolha um arquivo ou arraste-o para cá.';
-        dropzone.classList.add('active'); setTimeout(() => dropzone.classList.remove('active'), 800);
+        input.dataset.enhanced = '1'; input.accept = '.iso,.chd,.cso,.isz,.bin,.elf'; input.setAttribute('aria-label', 'Escolher imagem de jogo');
+        dropzone.textContent = 'Pronto. Escolha um arquivo ou arraste-o para cá.'; dropzone.classList.add('active'); setTimeout(() => dropzone.classList.remove('active'), 800);
       }
     });
-    rootObserver.observe(document.getElementById('root'), { childList: true, subtree: true });
+    rootObserver.observe(document.getElementById('root'), { childList:true, subtree:true });
+    if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
   </script>
 </body>
 </html>

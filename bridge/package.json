@@ -1,9 +1,0 @@
-{
-  "name": "pcsx2-web-station-bridge",
-  "private": true,
-  "version": "1.0.0",
-  "description": "Bridge local sem dependências para conectar o site ao PCSX2",
-  "type": "module",
-  "scripts": { "start": "node bridge.mjs" },
-  "engines": { "node": ">=18" }
-}
