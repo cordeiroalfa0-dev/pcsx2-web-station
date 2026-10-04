@@ -10,16 +10,21 @@
     @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
     :root { color-scheme: dark; --bg:#08090d; --surface:#101218; --surface-2:#171a22; --surface-3:#1d212c; --line:#2b303d; --text:#f5f3ef; --muted:#969aa8; --accent:#d7ff43; --accent-ink:#151a08; --violet:#8c7bff; --danger:#ff8c8c; }
     * { box-sizing:border-box; }
-    html { scroll-behavior:smooth; }
+    html { scroll-behavior:smooth; scrollbar-width:none; }
+    html::-webkit-scrollbar { display:none; }
     body { margin:0; min-height:100vh; background:radial-gradient(circle at 76% -8%, rgba(140,123,255,.20), transparent 31%), radial-gradient(circle at 15% 10%, rgba(215,255,67,.08), transparent 27%), var(--bg); color:var(--text); font:15px/1.55 'Space Grotesk', system-ui, sans-serif; }
     body::before { content:''; position:fixed; inset:0; pointer-events:none; opacity:.18; background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px); background-size:48px 48px; mask-image:linear-gradient(to bottom, black, transparent 70%); }
     header { position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; gap:28px; padding:16px clamp(20px,5vw,72px); border-bottom:1px solid rgba(255,255,255,.08); background:rgba(8,9,13,.78); backdrop-filter:blur(22px); }
+    .site-nav { display:flex; align-items:center; gap:6px; margin-left:auto; }
+    .site-nav a { padding:7px 10px; border:1px solid transparent; border-radius:7px; color:var(--muted); text-decoration:none; font:11px 'DM Mono',monospace; transition:.18s ease; }
+    .site-nav a:hover, .site-nav a:focus-visible { border-color:var(--line); color:var(--accent); background:var(--surface-2); outline:none; }
     .brand { display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text); }
     .brand-mark { display:grid; place-items:center; width:34px; height:34px; border-radius:10px; background:var(--accent); color:var(--accent-ink); font-weight:700; font-size:15px; box-shadow:0 0 24px rgba(215,255,67,.22); }
     h1 { margin:0; font-size:15px; letter-spacing:-.02em; }
     .header-meta { display:flex; align-items:center; gap:18px; color:var(--muted); font:11px 'DM Mono',monospace; text-transform:uppercase; letter-spacing:.08em; }
     .badge { padding:6px 9px; border:1px solid rgba(215,255,67,.35); border-radius:999px; color:var(--accent); font:10px 'DM Mono',monospace; letter-spacing:.1em; }
     main { position:relative; width:min(1240px,calc(100% - 36px)); margin:0 auto 80px; }
+    section { scroll-margin-top:96px; }
     .intro { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(260px,.65fr); align-items:end; gap:44px; padding:clamp(54px,9vw,112px) 0 42px; }
     .eyebrow { display:flex; align-items:center; gap:10px; margin-bottom:20px; color:var(--accent); font:11px 'DM Mono',monospace; text-transform:uppercase; letter-spacing:.12em; }
     .eyebrow::before { content:''; width:28px; height:1px; background:var(--accent); }
@@ -81,14 +86,14 @@
     .status { min-height:20px; color:var(--muted); font-size:12px; } code { color:var(--accent); }
     body.performance-mode .canvas-wrap { background:#000; } body.performance-mode #outputCanvas { image-rendering:pixelated; border-color:#596b55; } body.performance-mode .emulator,body.performance-mode .source-card,body.performance-mode .performance-card { box-shadow:none; }
     @media (max-width:900px) { .intro{grid-template-columns:1fr}.performance-grid{grid-template-columns:1fr 1fr}.hero-side{max-width:440px} }
-    @media (max-width:760px) { header{padding:14px 18px}.header-meta{gap:9px}.header-meta span:not(.badge){display:none}.source-panel,.notes{grid-template-columns:1fr}.bridge-grid{grid-template-columns:1fr}.canvas-wrap{min-height:520px} }
+    @media (max-width:760px) { header{padding:12px 18px; gap:10px; overflow-x:auto; flex-wrap:wrap}.site-nav{order:3; flex:1 0 100%; justify-content:center; border-top:1px solid rgba(255,255,255,.07); padding-top:8px}.header-meta{gap:9px}.header-meta span:not(.badge){display:none}.source-panel,.notes{grid-template-columns:1fr}.bridge-grid{grid-template-columns:1fr}.canvas-wrap{min-height:520px} }
     @media (max-width:520px) { main{width:min(100% - 24px,1240px)}.intro{padding-top:52px}.intro h2{font-size:clamp(42px,14vw,68px)}.performance-grid{grid-template-columns:1fr}.performance-card,.remote-card,.bridge-card,.source-card{padding:18px}.emulator-bar{align-items:flex-start;flex-direction:column}.header-meta{font-size:9px} }
   </style>
 </head>
 <body>
   <header>
     <a class="brand" href="/" aria-label="PCSX2 Web Station — início"><span class="brand-mark">P2</span><h1>PCSX2 Web Station</h1></a>
-    <div class="header-meta"><span>LOCAL GAME STATION</span><span class="badge">WEBASSEMBLY</span></div>
+    <nav class="site-nav" aria-label="Atalhos da página"><a href="#emulator">Jogar</a><a href="#remote">Servidor</a><a href="#bridge">Biblioteca</a><a href="#more">Mais</a></nav><div class="header-meta"><span>LOCAL GAME STATION</span><span class="badge">WEBASSEMBLY</span></div>
   </header>
   <main>
     <section class="intro">
@@ -127,7 +132,7 @@
       <ul class="performance-checks" id="performanceChecks" aria-live="polite"></ul>
       <div class="status" id="gamepadStatus" aria-live="polite">Gamepad: procurando controle…</div>
     </section>
-    <section class="remote-card" aria-label="PCSX2 hospedado no servidor">
+    <section class="remote-card" id="remote" aria-label="PCSX2 hospedado no servidor">
       <h3 style="margin:0 0 6px;">PCSX2 na web · servidor remoto</h3>
       <p class="bridge-help">O PCSX2 roda no servidor e esta página abre a sessão gráfica no navegador. O seu computador não precisa instalar o emulador.</p>
       <div class="remote-grid">
@@ -138,7 +143,7 @@
       </div>
       <div class="status" id="remotePcsx2Status" aria-live="polite">Configure a URL do servidor para jogar pelo navegador.</div>
     </section>
-    <section class="source-panel" aria-label="Fontes de jogos">
+    <section class="source-panel" id="more" aria-label="Fontes de jogos">
       <div class="source-card">
         <h3>Google Drive · pasta pública</h3>
         <p>A pasta <strong>isogames</strong> está configurada como atalho. A listagem automática exige uma chave da API do Google; por enquanto, abra a pasta e escolha/baixe o arquivo autorizado.</p>
@@ -155,7 +160,7 @@
         <div class="status ok">✓ Nenhum upload automático</div>
       </div>
     </section>
-    <section class="bridge-card" aria-label="Conexão com o PCSX2 local">
+    <section class="bridge-card" id="bridge" aria-label="Conexão com o PCSX2 local">
       <h3 style="margin:0 0 6px;">Abrir ISO no PCSX2 deste PC</h3>
       <p class="bridge-help">Inicie o Bridge no mesmo computador onde o PCSX2 está instalado. O navegador não revela o caminho real de um arquivo escolhido; informe abaixo o caminho completo da ISO no PC.</p>
       <div class="bridge-grid">
